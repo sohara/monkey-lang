@@ -87,6 +87,36 @@ func TestModify(t *testing.T) {
 				},
 			},
 		},
+		{
+			&ReturnStatement{ReturnValue: one()},
+			&ReturnStatement{ReturnValue: two()},
+		},
+		{
+			&LetStatement{Value: one()},
+			&LetStatement{Value: two()},
+		},
+		{
+			&FunctionLiteral{
+				Parameters: []*Identifier{},
+				Body: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: one()},
+					},
+				},
+			},
+			&FunctionLiteral{
+				Parameters: []*Identifier{},
+				Body: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: two()},
+					},
+				},
+			},
+		},
+		{
+			&ArrayLiteral{Elements: []Expression{one(), one()}},
+			&ArrayLiteral{Elements: []Expression{two(), two()}},
+		},
 	}
 
 	for _, tt := range tests {
