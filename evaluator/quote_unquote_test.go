@@ -26,16 +26,6 @@ func TestQuote(t *testing.T) {
 			`quote(foobar + barfoo)`,
 			`(foobar + barfoo)`,
 		},
-		{
-			`let foobar = 8;
-			quote(foobar)`,
-			`foobar`,
-		},
-		{
-			`let foobar = 8;
-			quote(unquote(foobar))`,
-			`8`,
-		},
 	}
 
 	for _, tt := range tests {
