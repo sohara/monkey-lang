@@ -9,6 +9,11 @@ import (
 
 const StackSize = 2048
 
+var (
+	True  = &object.Boolean{Value: true}
+	False = &object.Boolean{Value: false}
+)
+
 type VM struct {
 	constants    []object.Object
 	instructions code.Instructions
@@ -47,12 +52,16 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
-			// right := vm.pop()
-			// left := vm.pop()
-			// leftValue := left.(*object.Integer).Value
-			// rightValue := right.(*object.Integer).Value
-			// result := leftValue + rightValue
-			// vm.push(&object.Integer{Value: result})
+		case code.OpTrue:
+			err := vm.push(True)
+			if err != nil {
+				return err
+			}
+		case code.OpFalse:
+			err := vm.push(False)
+			if err != nil {
+				return err
+			}
 		case code.OpPop:
 			vm.pop()
 		}
