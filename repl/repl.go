@@ -4,17 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"monkey-lang/evaluator"
+	"monkey-lang/compiler"
 	"monkey-lang/lexer"
-	"monkey-lang/object"
 	"monkey-lang/parser"
+	"monkey-lang/vm"
 )
 
 const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
 
 	for {
 		fmt.Fprint(out, PROMPT)
@@ -33,11 +32,22 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		evaluated := evaluator.Eval(program, env)
-		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+		comp := compiler.New()
+		err := comp.Compile(program)
+		if err != nil {
+			fmt.Fprintf(out, "Woops! Compilation failded:\n%s\n", err)
 		}
+
+		machine := vm.New(comp.Bytecode())
+		err = machine.Run()
+
+		if err != nil {
+			fmt.Fprintf(out, "Woops! Executing bytecode failed:\n%s\n", err)
+		}
+
+		stacktop := machine.StackTop()
+		io.WriteString(out, stacktop.Inspect())
+		io.WriteString(out, "\n")
 	}
 }
 
