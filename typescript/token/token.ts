@@ -13,6 +13,12 @@ export const TokenType = {
   RBRACE: "}",
   FUNCTION: "FUNCTION",
   LET: "LET",
+  MINUS: "-",
+  BANG: "!",
+  ASTERISK: "*",
+  SLASH: "/",
+  LT: "<",
+  GT: ">",
 } as const;
 
 export type TokenType = (typeof TokenType)[keyof typeof TokenType];
