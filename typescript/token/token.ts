@@ -13,6 +13,11 @@ export const TokenType = {
   RBRACE: "}",
   FUNCTION: "FUNCTION",
   LET: "LET",
+  TRUE: "TRUE",
+  FALSE: "FALSE",
+  IF: "IF",
+  ELSE: "ELSE",
+  RETURN: "RETURN",
   MINUS: "-",
   BANG: "!",
   ASTERISK: "*",
@@ -26,6 +31,11 @@ export type TokenType = (typeof TokenType)[keyof typeof TokenType];
 const KEYWORDS = {
   fn: TokenType.FUNCTION,
   let: TokenType.LET,
+  true: TokenType.TRUE,
+  false: TokenType.FALSE,
+  if: TokenType.IF,
+  else: TokenType.ELSE,
+  return: TokenType.RETURN,
 } as const;
 
 function isKeyOfKeywords(key: string): key is keyof typeof KEYWORDS {
