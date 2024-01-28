@@ -1,4 +1,4 @@
-import { Token, TokenType } from "../token/token";
+import { Token, TokenType, lookupIdent } from "../token/token";
 
 export class Lexer {
   input: string;
@@ -23,8 +23,10 @@ export class Lexer {
   }
 
   nextToken(): Token {
-    let token: Token = { type: TokenType.EOF, literal: "" };
+    let token: Token = { type: TokenType.ILLEGAL, literal: "" };
+    this.skipWhitespace();
 
+    console.log({ ch: this.ch });
     switch (this.ch) {
       case "=":
         token = newToken(TokenType.ASSIGN, this.ch);
@@ -53,11 +55,65 @@ export class Lexer {
       case 0:
         token = { type: TokenType.EOF, literal: "" };
         break;
+      default:
+        if (isLetter(this.ch)) {
+          token.literal = this.readIdentifier();
+          token.type = lookupIdent(token.literal);
+          return token;
+        } else if (isDigit(this.ch)) {
+          token.type = TokenType.INT;
+          token.literal = this.readNumber();
+          return token;
+        }
     }
 
     this.readChar();
     return token;
   }
+
+  readIdentifier() {
+    const position = this.position;
+    while (isLetter(this.ch)) {
+      this.readChar();
+    }
+    return this.input.slice(position, this.position);
+  }
+
+  readNumber() {
+    const position = this.position;
+    while (isDigit(this.ch)) {
+      this.readChar();
+    }
+    return this.input.slice(position, this.position);
+  }
+
+  skipWhitespace() {
+    while (
+      this.ch === " " ||
+      this.ch === "\t" ||
+      this.ch === "\n" ||
+      this.ch === "\r"
+    ) {
+      this.readChar();
+    }
+  }
+}
+
+function isLetter(ch: string | 0): boolean {
+  if (ch === 0 || ch.length !== 1) return false;
+
+  const code = ch.charCodeAt(0);
+  return (
+    (code >= 65 && code <= 90) || // A-Z
+    (code >= 97 && code <= 122) || // a-z
+    code === 95
+  ); // underscore (_)
+}
+
+function isDigit(ch: string | 0): boolean {
+  if (ch === 0 || ch.length !== 1) return false;
+  const code = ch.charCodeAt(0);
+  return code >= 48 && code <= 57;
 }
 
 function newToken(tokenType: TokenType, ch: string) {

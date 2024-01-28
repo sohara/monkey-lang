@@ -17,6 +17,22 @@ export const TokenType = {
 
 export type TokenType = (typeof TokenType)[keyof typeof TokenType];
 
+const KEYWORDS = {
+  fn: TokenType.FUNCTION,
+  let: TokenType.LET,
+} as const;
+
+function isKeyOfKeywords(key: string): key is keyof typeof KEYWORDS {
+  return Object.keys(KEYWORDS).includes(key);
+}
+
+export function lookupIdent(ident: string): TokenType {
+  if (isKeyOfKeywords(ident)) {
+    return KEYWORDS[ident];
+  }
+  return TokenType.IDENT;
+}
+
 export class Token {
   type: TokenType;
   literal: string;
