@@ -18,6 +18,8 @@ if (5 < 10) {
 } else {
   return false;
 }
+10 == 10;
+10 != 9;
 `;
 
   const testCases: [TokenType, string][] = [
@@ -86,6 +88,14 @@ if (5 < 10) {
     [TokenType.FALSE, "false"],
     [TokenType.SEMICOLON, ";"],
     [TokenType.RBRACE, "}"],
+    [TokenType.INT, "10"],
+    [TokenType.EQ, "=="],
+    [TokenType.INT, "10"],
+    [TokenType.SEMICOLON, ";"],
+    [TokenType.INT, "10"],
+    [TokenType.NOT_EQ, "!="],
+    [TokenType.INT, "9"],
+    [TokenType.SEMICOLON, ";"],
     [TokenType.EOF, ""],
   ];
 

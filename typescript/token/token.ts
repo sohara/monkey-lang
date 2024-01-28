@@ -24,6 +24,8 @@ export const TokenType = {
   SLASH: "/",
   LT: "<",
   GT: ">",
+  EQ: "==",
+  NOT_EQ: "!=",
 } as const;
 
 export type TokenType = (typeof TokenType)[keyof typeof TokenType];

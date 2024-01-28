@@ -26,10 +26,16 @@ export class Lexer {
     let token: Token = { type: TokenType.ILLEGAL, literal: "" };
     this.skipWhitespace();
 
-    console.log({ ch: this.ch });
     switch (this.ch) {
       case "=":
-        token = newToken(TokenType.ASSIGN, this.ch);
+        if (this.peekChar() === "=") {
+          const ch = this.ch;
+          this.readChar();
+          const literal = ch + this.ch;
+          token = newToken(TokenType.EQ, literal);
+        } else {
+          token = newToken(TokenType.ASSIGN, this.ch);
+        }
         break;
       case "+":
         token = newToken(TokenType.PLUS, this.ch);
@@ -38,7 +44,14 @@ export class Lexer {
         token = newToken(TokenType.MINUS, this.ch);
         break;
       case "!":
-        token = newToken(TokenType.BANG, this.ch);
+        if (this.peekChar() === "=") {
+          const ch = this.ch;
+          this.readChar();
+          const literal = ch + this.ch;
+          token = newToken(TokenType.NOT_EQ, literal);
+        } else {
+          token = newToken(TokenType.BANG, this.ch);
+        }
         break;
       case "/":
         token = newToken(TokenType.SLASH, this.ch);
@@ -87,6 +100,14 @@ export class Lexer {
 
     this.readChar();
     return token;
+  }
+
+  peekChar() {
+    if (this.readPosition >= this.input.length) {
+      return 0;
+    } else {
+      return this.input.charAt(this.readPosition);
+    }
   }
 
   readIdentifier() {
