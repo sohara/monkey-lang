@@ -1,7 +1,12 @@
 import { expect, test } from "bun:test";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "./parser";
-import { LetStatement, ReturnStatement } from "../ast/ast";
+import {
+  ExpressionStatement,
+  Identifier,
+  LetStatement,
+  ReturnStatement,
+} from "../ast/ast";
 
 test("`let` statements", () => {
   const input = `
@@ -40,6 +45,28 @@ return 993322;
     expect(stmt).toBeInstanceOf(ReturnStatement);
     expect(stmt.tokenLiteral).toBe("return");
   }
+});
+
+test("identifier expressions", () => {
+  const input = "foobar;";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  expect(program.statements.length).toBe(1);
+  expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
+  expect(
+    (program.statements[0] as ExpressionStatement).expression,
+  ).toBeInstanceOf(Identifier);
+  expect(
+    ((program.statements[0] as ExpressionStatement).expression as Identifier)
+      .value,
+  ).toBe("foobar");
+  expect(
+    (program.statements[0] as ExpressionStatement).expression.tokenLiteral,
+  ).toBe("foobar");
 });
 
 function checkParseErrors(parser: Parser) {

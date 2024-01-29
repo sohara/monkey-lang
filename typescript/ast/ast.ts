@@ -10,7 +10,7 @@ export interface Statement extends Node {
   // Empty in TypeScript, serves as a "marker" interface
 }
 
-interface Expression extends Node {
+export interface Expression extends Node {
   // Empty in TypeScript, serves as a "marker" interface
 }
 
@@ -88,5 +88,23 @@ export class ReturnStatement implements Statement {
 
   get string() {
     return `${this.tokenLiteral} ${this.returnValue?.string ?? ""};`;
+  }
+}
+
+export class ExpressionStatement implements Statement {
+  token: Token;
+  expression: Expression;
+
+  constructor(token: Token, expression: Expression) {
+    this.token = token;
+    this.expression = expression;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `${this.expression.string}`;
   }
 }
