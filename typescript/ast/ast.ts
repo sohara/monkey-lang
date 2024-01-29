@@ -126,3 +126,23 @@ export class IntegerLiteral implements Expression {
     return this.token.literal;
   }
 }
+
+export class PrefixExpression implements Expression {
+  token: Token;
+  operator: string;
+  right: Expression;
+
+  constructor(token: Token, operator: string, right: Expression) {
+    this.token = token;
+    this.operator = operator;
+    this.right = right;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `(${this.operator}${this.right.string})`;
+  }
+}

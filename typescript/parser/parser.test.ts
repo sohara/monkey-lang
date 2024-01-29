@@ -6,7 +6,9 @@ import {
   Identifier,
   IntegerLiteral,
   LetStatement,
+  PrefixExpression,
   ReturnStatement,
+  type Expression,
 } from "../ast/ast";
 
 test("`let` statements", () => {
@@ -96,6 +98,47 @@ test("integer literals", () => {
     ).tokenLiteral,
   ).toBe("5");
 });
+
+test("parsing prefix expressions", () => {
+  const tests: [string, string, number][] = [
+    ["!5;", "!", 5],
+    ["-15;", "-", 15],
+  ];
+
+  for (let [input, operator, integerValue] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
+    expect(
+      (program.statements[0] as ExpressionStatement).expression,
+    ).toBeInstanceOf(PrefixExpression);
+    expect(
+      (
+        (program.statements[0] as ExpressionStatement)
+          .expression as PrefixExpression
+      ).operator,
+    ).toBe(operator);
+    testIntegerLiteral(
+      (
+        (program.statements[0] as ExpressionStatement)
+          .expression as PrefixExpression
+      ).right,
+      integerValue,
+    );
+  }
+});
+
+function testIntegerLiteral(literal: Expression, expectedValue: number) {
+  expect(literal).toBeInstanceOf(IntegerLiteral);
+  expect(typeof (literal as IntegerLiteral).value).toBe("number");
+  expect((literal as IntegerLiteral).value).toBe(expectedValue);
+  expect((literal as IntegerLiteral).tokenLiteral).toBe(`${expectedValue}`);
+}
 
 function checkParseErrors(parser: Parser) {
   const errors = parser.errors;

@@ -2,6 +2,7 @@ import {
   Identifier,
   IntegerLiteral,
   LetStatement,
+  PrefixExpression,
   Program,
   ReturnStatement,
 } from "../ast/ast";
@@ -40,6 +41,9 @@ export class Parser {
     this.infixParseFns = new Map();
     this.registerPrefixParseFn(TokenType.IDENT, this.parseIdentifier);
     this.registerPrefixParseFn(TokenType.INT, this.parseIntegerLiteral);
+    this.registerPrefixParseFn(TokenType.INT, this.parseIntegerLiteral);
+    this.registerPrefixParseFn(TokenType.BANG, this.parsePrefixExpression);
+    this.registerPrefixParseFn(TokenType.MINUS, this.parsePrefixExpression);
 
     this.nextToken();
     this.nextToken();
@@ -141,6 +145,7 @@ export class Parser {
         const leftExp = prefixFn();
         return leftExp;
       }
+      this.noPrefixParseFnError(tokenType);
     }
     return null;
   }
@@ -162,6 +167,24 @@ export class Parser {
       }
       const literal = new IntegerLiteral(curToken, value);
       return literal;
+    }
+    return null;
+  }
+
+  parsePrefixExpression(): Expression | null {
+    const prefToken = this.curToken;
+    if (prefToken) {
+      this.nextToken();
+      const right = this.parseExpression(Precedence.PREFIX);
+      if (right) {
+        const prefExpression = new PrefixExpression(
+          prefToken,
+          prefToken.literal,
+          right,
+        );
+
+        return prefExpression;
+      }
     }
     return null;
   }
@@ -191,5 +214,10 @@ export class Parser {
 
   registerPrefixParseFn(tokenType: TokenType, fn: PrefixParseFn) {
     this.prefixParseFns.set(tokenType, fn.bind(this));
+  }
+
+  noPrefixParseFnError(tokenType: TokenType) {
+    const msg = `no prefix parse function for ${tokenType} found`;
+    this.errors.push(msg);
   }
 }
