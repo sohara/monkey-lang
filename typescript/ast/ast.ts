@@ -58,3 +58,16 @@ export class Identifier implements Expression {
     return this.token.literal;
   }
 }
+
+export class ReturnStatement implements Statement {
+  token: Token; // the 'return' statement
+  returnValue: Expression | null;
+
+  constructor(token: Token, returnValue?: Expression) {
+    this.token = token;
+    this.returnValue = returnValue ?? null;
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+}
