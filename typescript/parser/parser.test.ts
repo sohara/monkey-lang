@@ -17,9 +17,9 @@ let foobar = 838383;
   const identifiers = ["x", "y", "foobar"];
   for (let [index, identifier] of identifiers.entries()) {
     const stmt = program.statements[index];
-    expect(stmt.tokenLiteral()).toBe("let");
+    expect(stmt.tokenLiteral).toBe("let");
     expect(stmt).toBeInstanceOf(LetStatement);
-    expect((stmt as LetStatement).name.tokenLiteral()).toBe(identifier);
+    expect((stmt as LetStatement).name.tokenLiteral).toBe(identifier);
   }
 });
 
@@ -38,7 +38,7 @@ return 993322;
   expect(program.statements.length).toBe(3);
   for (let stmt of program.statements) {
     expect(stmt).toBeInstanceOf(ReturnStatement);
-    expect(stmt.tokenLiteral()).toBe("return");
+    expect(stmt.tokenLiteral).toBe("return");
   }
 });
 

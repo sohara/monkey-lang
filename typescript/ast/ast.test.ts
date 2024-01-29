@@ -12,5 +12,5 @@ test("string() methods", () => {
     ),
   ];
 
-  expect(program.string()).toBe(`let myVar = anotherVar;`);
+  expect(program.string).toBe(`let myVar = anotherVar;`);
 });

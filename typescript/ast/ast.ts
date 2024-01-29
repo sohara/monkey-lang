@@ -2,8 +2,8 @@
 import { Token } from "../token/token";
 
 interface Node {
-  tokenLiteral(): string;
-  string(): string;
+  tokenLiteral: string;
+  string: string;
 }
 
 export interface Statement extends Node {
@@ -21,16 +21,16 @@ export class Program implements Node {
     this.statements = [];
   }
 
-  tokenLiteral(): string {
+  get tokenLiteral(): string {
     if (this.statements.length > 0) {
-      return this.statements[0].tokenLiteral();
+      return this.statements[0].tokenLiteral;
     } else {
       return "";
     }
   }
 
-  string() {
-    return this.statements.map((s) => s.string()).join(" ");
+  get string(): string {
+    return this.statements.map((s) => s.string).join(" ");
   }
 }
 
@@ -45,13 +45,13 @@ export class LetStatement implements Statement {
     this.value = value ?? null;
   }
 
-  tokenLiteral(): string {
+  get tokenLiteral(): string {
     return this.token.literal;
   }
 
-  string() {
-    return `${this.tokenLiteral()} ${this.name.string()} = ${
-      this.value?.string() ?? ""
+  get string() {
+    return `${this.tokenLiteral} ${this.name.string} = ${
+      this.value?.string ?? ""
     };`;
   }
 }
@@ -65,11 +65,11 @@ export class Identifier implements Expression {
     this.value = value;
   }
 
-  tokenLiteral(): string {
+  get tokenLiteral(): string {
     return this.token.literal;
   }
 
-  string() {
+  get string() {
     return this.value;
   }
 }
@@ -82,11 +82,11 @@ export class ReturnStatement implements Statement {
     this.token = token;
     this.returnValue = returnValue ?? null;
   }
-  tokenLiteral(): string {
+  get tokenLiteral(): string {
     return this.token.literal;
   }
 
-  string() {
-    return `${this.tokenLiteral()} ${this.returnValue?.string() ?? ""};`;
+  get string() {
+    return `${this.tokenLiteral} ${this.returnValue?.string ?? ""};`;
   }
 }
