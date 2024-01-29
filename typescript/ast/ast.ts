@@ -3,6 +3,7 @@ import { Token } from "../token/token";
 
 interface Node {
   tokenLiteral(): string;
+  string(): string;
 }
 
 export interface Statement extends Node {
@@ -13,7 +14,7 @@ interface Expression extends Node {
   // Empty in TypeScript, serves as a "marker" interface
 }
 
-export class Program {
+export class Program implements Node {
   statements: Statement[];
 
   constructor() {
@@ -26,6 +27,10 @@ export class Program {
     } else {
       return "";
     }
+  }
+
+  string() {
+    return this.statements.map((s) => s.string()).join(" ");
   }
 }
 
@@ -43,6 +48,12 @@ export class LetStatement implements Statement {
   tokenLiteral(): string {
     return this.token.literal;
   }
+
+  string() {
+    return `${this.tokenLiteral()} ${this.name.string()} = ${
+      this.value?.string() ?? ""
+    };`;
+  }
 }
 
 export class Identifier implements Expression {
@@ -57,6 +68,10 @@ export class Identifier implements Expression {
   tokenLiteral(): string {
     return this.token.literal;
   }
+
+  string() {
+    return this.value;
+  }
 }
 
 export class ReturnStatement implements Statement {
@@ -69,5 +84,9 @@ export class ReturnStatement implements Statement {
   }
   tokenLiteral(): string {
     return this.token.literal;
+  }
+
+  string() {
+    return `${this.tokenLiteral()} ${this.returnValue?.string() ?? ""};`;
   }
 }
