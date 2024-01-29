@@ -108,3 +108,21 @@ export class ExpressionStatement implements Statement {
     return `${this.expression.string}`;
   }
 }
+
+export class IntegerLiteral implements Expression {
+  token: Token;
+  value: number;
+
+  constructor(token: Token, value: number) {
+    this.token = token;
+    this.value = value;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return this.token.literal;
+  }
+}

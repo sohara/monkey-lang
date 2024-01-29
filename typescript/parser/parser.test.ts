@@ -4,6 +4,7 @@ import { Parser } from "./parser";
 import {
   ExpressionStatement,
   Identifier,
+  IntegerLiteral,
   LetStatement,
   ReturnStatement,
 } from "../ast/ast";
@@ -67,6 +68,33 @@ test("identifier expressions", () => {
   expect(
     (program.statements[0] as ExpressionStatement).expression.tokenLiteral,
   ).toBe("foobar");
+});
+
+test("integer literals", () => {
+  const input = "5;";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  expect(program.statements.length).toBe(1);
+  expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
+  expect(
+    (program.statements[0] as ExpressionStatement).expression,
+  ).toBeInstanceOf(IntegerLiteral);
+  expect(
+    (
+      (program.statements[0] as ExpressionStatement)
+        .expression as IntegerLiteral
+    ).value,
+  ).toBe(5);
+  expect(
+    (
+      (program.statements[0] as ExpressionStatement)
+        .expression as IntegerLiteral
+    ).tokenLiteral,
+  ).toBe("5");
 });
 
 function checkParseErrors(parser: Parser) {

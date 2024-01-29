@@ -1,4 +1,10 @@
-import { Identifier, LetStatement, Program, ReturnStatement } from "../ast/ast";
+import {
+  Identifier,
+  IntegerLiteral,
+  LetStatement,
+  Program,
+  ReturnStatement,
+} from "../ast/ast";
 import {
   type Statement,
   type Expression,
@@ -33,6 +39,7 @@ export class Parser {
     this.prefixParseFns = new Map();
     this.infixParseFns = new Map();
     this.registerPrefixParseFn(TokenType.IDENT, this.parseIdentifier);
+    this.registerPrefixParseFn(TokenType.INT, this.parseIntegerLiteral);
 
     this.nextToken();
     this.nextToken();
@@ -141,6 +148,20 @@ export class Parser {
   parseIdentifier(): Expression | null {
     if (this.curToken) {
       return new Identifier(this.curToken, this.curToken?.literal);
+    }
+    return null;
+  }
+
+  parseIntegerLiteral(): IntegerLiteral | null {
+    const curToken = this.curToken;
+    if (curToken) {
+      const value = parseInt(this.curToken?.literal ?? "");
+      if (typeof value !== "number" || isNaN(value)) {
+        this.errors.push(`could not parse ${curToken.literal} as integer`);
+        return null;
+      }
+      const literal = new IntegerLiteral(curToken, value);
+      return literal;
     }
     return null;
   }
