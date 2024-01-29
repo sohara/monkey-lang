@@ -6,6 +6,7 @@ export class Parser {
   lexer: Lexer;
   curToken: Token | null = null;
   peekToken: Token | null = null;
+  errors: string[] = [];
 
   constructor(lexer: Lexer) {
     this.lexer = lexer;
@@ -73,6 +74,7 @@ export class Parser {
       this.nextToken();
       return true;
     } else {
+      this.peekError(tokenType);
       return false;
     }
   }
@@ -83,5 +85,10 @@ export class Parser {
 
   curTokenIs(tokenType: TokenType): boolean {
     return this.curToken?.type === tokenType;
+  }
+
+  peekError(tokenType: TokenType) {
+    const msg = `Expected next token to be ${tokenType}, got ${this.peekToken?.type}`;
+    this.errors.push(msg);
   }
 }

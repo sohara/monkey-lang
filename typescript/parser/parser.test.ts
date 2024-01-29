@@ -13,6 +13,7 @@ let foobar = 838383;
   const parser = new Parser(lexer);
 
   const program = parser.parseProgram();
+  checkParseErrors(parser);
   const identifiers = ["x", "y", "foobar"];
   for (let [index, identifier] of identifiers.entries()) {
     const stmt = program.statements[index];
@@ -21,3 +22,13 @@ let foobar = 838383;
     expect((stmt as LetStatement).name.tokenLiteral()).toBe(identifier);
   }
 });
+
+function checkParseErrors(parser: Parser) {
+  const errors = parser.errors;
+  if (errors.length > 0) {
+    for (const error of errors) {
+      console.error(`Parser error: ${error}`);
+    }
+    throw new Error(`Parser has ${errors.length} errors`);
+  }
+}
