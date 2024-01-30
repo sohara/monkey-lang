@@ -9,6 +9,7 @@ import {
   PrefixExpression,
   ReturnStatement,
   type Expression,
+  InfixExpression,
 } from "../ast/ast";
 
 test("`let` statements", () => {
@@ -129,6 +130,53 @@ test("parsing prefix expressions", () => {
           .expression as PrefixExpression
       ).right,
       integerValue,
+    );
+  }
+});
+
+test("parsing infix expressions", () => {
+  const tests: [string, number, string, number][] = [
+    ["5 + 5;", 5, "+", 5],
+    ["5 - 5;", 5, "-", 5],
+    ["5 * 5;", 5, "*", 5],
+    ["5 / 5;", 5, "/", 5],
+    ["5 > 5;", 5, ">", 5],
+    ["5 < 5;", 5, "<", 5],
+    ["5 == 5;", 5, "==", 5],
+    ["5 != 5;", 5, "!=", 5],
+  ];
+
+  for (let [input, leftValue, operator, rightValue] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
+    expect(
+      (program.statements[0] as ExpressionStatement).expression,
+    ).toBeInstanceOf(InfixExpression);
+    testIntegerLiteral(
+      (
+        (program.statements[0] as ExpressionStatement)
+          .expression as InfixExpression
+      ).left,
+      leftValue,
+    );
+    expect(
+      (
+        (program.statements[0] as ExpressionStatement)
+          .expression as InfixExpression
+      ).operator,
+    ).toBe(operator);
+    testIntegerLiteral(
+      (
+        (program.statements[0] as ExpressionStatement)
+          .expression as InfixExpression
+      ).right,
+      rightValue,
     );
   }
 });
