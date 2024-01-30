@@ -158,24 +158,10 @@ test("parsing infix expressions", () => {
     expect(
       (program.statements[0] as ExpressionStatement).expression,
     ).toBeInstanceOf(InfixExpression);
-    testIntegerLiteral(
-      (
-        (program.statements[0] as ExpressionStatement)
-          .expression as InfixExpression
-      ).left,
+    testInfixExpression(
+      (program.statements[0] as ExpressionStatement).expression,
       leftValue,
-    );
-    expect(
-      (
-        (program.statements[0] as ExpressionStatement)
-          .expression as InfixExpression
-      ).operator,
-    ).toBe(operator);
-    testIntegerLiteral(
-      (
-        (program.statements[0] as ExpressionStatement)
-          .expression as InfixExpression
-      ).right,
+      operator,
       rightValue,
     );
   }
@@ -224,4 +210,34 @@ function checkParseErrors(parser: Parser) {
     }
     throw new Error(`Parser has ${errors.length} errors`);
   }
+}
+
+function testInfixExpression(
+  expression: Expression,
+  expectedLeft: number,
+  expectedOperator: string,
+  expectedRight: number,
+) {
+  expect(expression).toBeInstanceOf(InfixExpression);
+  testLiteralExpression((expression as InfixExpression).left, expectedLeft);
+  expect((expression as InfixExpression).operator).toBe(expectedOperator);
+  testLiteralExpression((expression as InfixExpression).right, expectedRight);
+}
+
+function testLiteralExpression(
+  expression: Expression,
+  expected: string | number,
+) {
+  switch (typeof expected) {
+    case "string":
+      return testIdentifier(expression, expected);
+    case "number":
+      return testIntegerLiteral(expression, expected);
+  }
+}
+
+function testIdentifier(expression: Expression, expected: string) {
+  expect(expression).toBeInstanceOf(Identifier);
+  expect((expression as Identifier).value).toBe(expected);
+  expect((expression as Identifier).tokenLiteral).toBe(expected);
 }
