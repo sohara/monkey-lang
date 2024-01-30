@@ -17,9 +17,9 @@ export class Lexer {
       this.ch = 0;
     } else {
       this.ch = this.input.charAt(this.readPosition);
-      this.position = this.readPosition;
-      this.readPosition += 1;
     }
+    this.position = this.readPosition;
+    this.readPosition += 1;
   }
 
   nextToken(): Token {

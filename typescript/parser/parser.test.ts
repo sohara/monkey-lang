@@ -181,6 +181,34 @@ test("parsing infix expressions", () => {
   }
 });
 
+test("operator precedence in parsing", () => {
+  const tests: [string, string][] = [
+    ["-a * b", "((-a) * b)"],
+    ["!-a", "(!(-a))"],
+    ["a + b + c", "((a + b) + c)"],
+    ["a + b - c", "((a + b) - c)"],
+    ["a * b * c", "((a * b) * c)"],
+    ["a * b / c", "((a * b) / c)"],
+    ["a + b / c", "(a + (b / c))"],
+    ["a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"],
+    ["3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"],
+    ["5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"],
+    ["5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"],
+    ["3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"],
+  ];
+
+  for (let [input, expected] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+
+    const actual = program.string;
+    expect(actual).toEqual(expected);
+  }
+});
+
 function testIntegerLiteral(literal: Expression, expectedValue: number) {
   expect(literal).toBeInstanceOf(IntegerLiteral);
   expect(typeof (literal as IntegerLiteral).value).toBe("number");

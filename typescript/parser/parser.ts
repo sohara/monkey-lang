@@ -59,9 +59,9 @@ export class Parser {
     this.infixParseFns = new Map();
     this.registerPrefixParseFn(TokenType.IDENT, this.parseIdentifier);
     this.registerPrefixParseFn(TokenType.INT, this.parseIntegerLiteral);
-    this.registerPrefixParseFn(TokenType.INT, this.parseIntegerLiteral);
     this.registerPrefixParseFn(TokenType.BANG, this.parsePrefixExpression);
     this.registerPrefixParseFn(TokenType.MINUS, this.parsePrefixExpression);
+
     this.registerInfixParseFn(TokenType.PLUS, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.MINUS, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.SLASH, this.parseInfixExpression);
@@ -165,34 +165,30 @@ export class Parser {
 
   parseExpression(precedence: number): Expression | null {
     const tokenType = this.curToken?.type;
-    if (tokenType) {
-      const prefixFn = this.prefixParseFns.get(tokenType);
-      if (prefixFn) {
-        let leftExp: Expression | null;
-        leftExp = prefixFn();
-        if (leftExp) {
-          while (
-            !this.peekTokenIs(TokenType.SEMICOLON) &&
-            precedence < this.peekPrecedence()
-          ) {
-            const infixFn = this.peekToken
-              ? this.infixParseFns.get(this.peekToken.type)
-              : null;
-            if (!infixFn) {
-              return null;
-            }
-            this.nextToken();
-
-            leftExp = leftExp ? infixFn(leftExp) : leftExp;
-          }
-        }
-        return leftExp;
-      } else {
-        this.noPrefixParseFnError(tokenType);
-        return null;
-      }
+    const prefixFn = tokenType && this.prefixParseFns.get(tokenType);
+    if (!prefixFn) {
+      this.noPrefixParseFnError(tokenType);
+      return null;
     }
-    return null;
+    let leftExp: Expression | null;
+    leftExp = prefixFn();
+
+    while (
+      leftExp &&
+      !this.peekTokenIs(TokenType.SEMICOLON) &&
+      precedence < this.peekPrecedence()
+    ) {
+      const infixFn = this.peekToken
+        ? this.infixParseFns.get(this.peekToken.type)
+        : null;
+      if (!infixFn) {
+        return leftExp;
+      }
+      this.nextToken();
+
+      leftExp = infixFn(leftExp);
+    }
+    return leftExp;
   }
 
   parseIdentifier(): Expression | null {
@@ -285,7 +281,7 @@ export class Parser {
     this.infixParseFns.set(tokenType, fn.bind(this));
   }
 
-  noPrefixParseFnError(tokenType: TokenType) {
+  noPrefixParseFnError(tokenType?: TokenType) {
     const msg = `no prefix parse function for ${tokenType} found`;
     this.errors.push(msg);
   }

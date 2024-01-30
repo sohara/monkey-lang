@@ -30,7 +30,7 @@ export class Program implements Node {
   }
 
   get string(): string {
-    return this.statements.map((s) => s.string).join(" ");
+    return this.statements.map((s) => s.string).join("");
   }
 }
 
@@ -170,6 +170,6 @@ export class InfixExpression implements Expression {
   }
 
   get string() {
-    return `(${this.left.string}${this.operator}${this.right.string})`;
+    return `(${this.left.string} ${this.operator} ${this.right.string})`;
   }
 }
