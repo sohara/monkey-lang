@@ -1,4 +1,5 @@
 import {
+  BooleanLiteral,
   Identifier,
   InfixExpression,
   IntegerLiteral,
@@ -61,6 +62,8 @@ export class Parser {
     this.registerPrefixParseFn(TokenType.INT, this.parseIntegerLiteral);
     this.registerPrefixParseFn(TokenType.BANG, this.parsePrefixExpression);
     this.registerPrefixParseFn(TokenType.MINUS, this.parsePrefixExpression);
+    this.registerPrefixParseFn(TokenType.TRUE, this.parseBoolean);
+    this.registerPrefixParseFn(TokenType.FALSE, this.parseBoolean);
 
     this.registerInfixParseFn(TokenType.PLUS, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.MINUS, this.parseInfixExpression);
@@ -210,6 +213,11 @@ export class Parser {
       return literal;
     }
     return null;
+  }
+
+  parseBoolean(): BooleanLiteral {
+    const token = this.curToken ?? new Token(TokenType.FALSE, "false");
+    return new BooleanLiteral(token, this.curTokenIs(TokenType.TRUE));
   }
 
   parsePrefixExpression(): Expression | null {

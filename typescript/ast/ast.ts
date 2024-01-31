@@ -127,6 +127,24 @@ export class IntegerLiteral implements Expression {
   }
 }
 
+export class BooleanLiteral implements Expression {
+  token: Token;
+  value: boolean;
+
+  constructor(token: Token, value: boolean) {
+    this.token = token;
+    this.value = value;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return this.token.literal;
+  }
+}
+
 export class PrefixExpression implements Expression {
   token: Token;
   operator: string;

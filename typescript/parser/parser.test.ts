@@ -10,8 +10,10 @@ import {
   ReturnStatement,
   type Expression,
   InfixExpression,
+  BooleanLiteral,
 } from "../ast/ast";
 
+type LiteralValue = number | boolean | string;
 test("`let` statements", () => {
   const input = `
 let x = 5;
@@ -135,7 +137,7 @@ test("parsing prefix expressions", () => {
 });
 
 test("parsing infix expressions", () => {
-  const tests: [string, number, string, number][] = [
+  const tests: [string, LiteralValue, string, LiteralValue][] = [
     ["5 + 5;", 5, "+", 5],
     ["5 - 5;", 5, "-", 5],
     ["5 * 5;", 5, "*", 5],
@@ -144,6 +146,9 @@ test("parsing infix expressions", () => {
     ["5 < 5;", 5, "<", 5],
     ["5 == 5;", 5, "==", 5],
     ["5 != 5;", 5, "!=", 5],
+    ["true == true", true, "==", true],
+    ["true != false", true, "!=", false],
+    ["false == false", false, "==", false],
   ];
 
   for (let [input, leftValue, operator, rightValue] of tests) {
@@ -181,6 +186,10 @@ test("operator precedence in parsing", () => {
     ["5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"],
     ["5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"],
     ["3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"],
+    ["true", "true"],
+    ["false", "false"],
+    ["3 > 5 == false", "((3 > 5) == false)"],
+    ["3 < 5 == true", "((3 < 5) == true)"],
   ];
 
   for (let [input, expected] of tests) {
@@ -192,6 +201,32 @@ test("operator precedence in parsing", () => {
 
     const actual = program.string;
     expect(actual).toEqual(expected);
+  }
+});
+
+test("boolean expressions", () => {
+  const tests: [string, boolean][] = [
+    ["true;", true],
+    ["false;", false],
+  ];
+  for (let [input, expectedBoolean] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
+    expect(
+      (program.statements[0] as ExpressionStatement).expression,
+    ).toBeInstanceOf(BooleanLiteral);
+    expect(
+      (
+        (program.statements[0] as ExpressionStatement)
+          .expression as BooleanLiteral
+      ).value,
+    ).toBe(expectedBoolean);
   }
 });
 
@@ -214,9 +249,9 @@ function checkParseErrors(parser: Parser) {
 
 function testInfixExpression(
   expression: Expression,
-  expectedLeft: number,
+  expectedLeft: LiteralValue,
   expectedOperator: string,
-  expectedRight: number,
+  expectedRight: LiteralValue,
 ) {
   expect(expression).toBeInstanceOf(InfixExpression);
   testLiteralExpression((expression as InfixExpression).left, expectedLeft);
@@ -224,16 +259,21 @@ function testInfixExpression(
   testLiteralExpression((expression as InfixExpression).right, expectedRight);
 }
 
-function testLiteralExpression(
-  expression: Expression,
-  expected: string | number,
-) {
+function testLiteralExpression(expression: Expression, expected: LiteralValue) {
   switch (typeof expected) {
     case "string":
       return testIdentifier(expression, expected);
     case "number":
       return testIntegerLiteral(expression, expected);
+    case "boolean":
+      return testBoolean(expression, expected);
   }
+}
+
+function testBoolean(expression: Expression, expected: boolean) {
+  expect(expression).toBeInstanceOf(BooleanLiteral);
+  expect((expression as BooleanLiteral).value).toBe(expected);
+  expect((expression as BooleanLiteral).tokenLiteral).toBe(`${expected}`);
 }
 
 function testIdentifier(expression: Expression, expected: string) {
