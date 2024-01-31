@@ -190,6 +190,9 @@ test("operator precedence in parsing", () => {
     ["false", "false"],
     ["3 > 5 == false", "((3 > 5) == false)"],
     ["3 < 5 == true", "((3 < 5) == true)"],
+    ["1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"],
+    ["(5 + 5) * 2", "((5 + 5) * 2)"],
+    ["2 / (5 + 5)", "(2 / (5 + 5))"],
   ];
 
   for (let [input, expected] of tests) {

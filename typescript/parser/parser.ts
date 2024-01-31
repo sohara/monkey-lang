@@ -64,6 +64,7 @@ export class Parser {
     this.registerPrefixParseFn(TokenType.MINUS, this.parsePrefixExpression);
     this.registerPrefixParseFn(TokenType.TRUE, this.parseBoolean);
     this.registerPrefixParseFn(TokenType.FALSE, this.parseBoolean);
+    this.registerPrefixParseFn(TokenType.LPAREN, this.parseGroupedExpression);
 
     this.registerInfixParseFn(TokenType.PLUS, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.MINUS, this.parseInfixExpression);
@@ -218,6 +219,18 @@ export class Parser {
   parseBoolean(): BooleanLiteral {
     const token = this.curToken ?? new Token(TokenType.FALSE, "false");
     return new BooleanLiteral(token, this.curTokenIs(TokenType.TRUE));
+  }
+
+  parseGroupedExpression(): Expression | null {
+    this.nextToken();
+
+    const exp = this.parseExpression(Precedence.LOWEST);
+
+    if (!this.expectPeek(TokenType.RPAREN)) {
+      return null;
+    }
+
+    return exp;
   }
 
   parsePrefixExpression(): Expression | null {
