@@ -271,9 +271,10 @@ test("function literal parsing", () => {
   testLiteralExpression(fl.parameters[1], "y");
 
   expect(fl.body?.statements.length).toBe(1);
-  assertClass(fl.body?.statements[0], ExpressionStatement);
+  const bodyStatement = fl.body?.statements[0];
+  assertClass(bodyStatement, ExpressionStatement);
 
-  testInfixExpression(fl.body.statements[0], "x", "+", "y");
+  testInfixExpression(bodyStatement.expression, "x", "+", "y");
 });
 
 test("function parameter parsing", () => {
