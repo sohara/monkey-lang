@@ -11,6 +11,7 @@ import {
   type Expression,
   InfixExpression,
   BooleanLiteral,
+  IfExpression,
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
@@ -233,6 +234,61 @@ test("boolean expressions", () => {
   }
 });
 
+test("`if` expressions", () => {
+  const input = "if (x < y) { x }";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  expect(program.statements.length).toBe(1);
+  const statement = program.statements[0];
+
+  assertClass(statement, ExpressionStatement);
+  assertClass(statement.expression, IfExpression);
+  assertClass(statement.expression.condition, InfixExpression);
+
+  testInfixExpression(statement.expression.condition, "x", "<", "y");
+
+  expect(statement.expression.consequence?.statements.length).toBe(1);
+  const consequence = statement.expression.consequence?.statements[0];
+  assertClass(consequence, ExpressionStatement);
+
+  testIdentifier(consequence.expression, "x");
+
+  expect(statement.expression.alternative).toBeNull();
+});
+
+test("`if-else` expressions", () => {
+  const input = "if (x < y) { x } else { y }";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  expect(program.statements.length).toBe(1);
+  const statement = program.statements[0];
+
+  assertClass(statement, ExpressionStatement);
+  assertClass(statement.expression, IfExpression);
+  assertClass(statement.expression.condition, InfixExpression);
+
+  testInfixExpression(statement.expression.condition, "x", "<", "y");
+
+  expect(statement.expression.consequence?.statements.length).toBe(1);
+  const consequence = statement.expression.consequence?.statements[0];
+  assertClass(consequence, ExpressionStatement);
+
+  testIdentifier(consequence.expression, "x");
+
+  expect(statement.expression.alternative?.statements.length).toBe(1);
+  const alternative = statement.expression.alternative?.statements[0];
+  assertClass(alternative, ExpressionStatement);
+  testIdentifier(alternative.expression, "y");
+});
+
 function testIntegerLiteral(literal: Expression, expectedValue: number) {
   expect(literal).toBeInstanceOf(IntegerLiteral);
   expect(typeof (literal as IntegerLiteral).value).toBe("number");
@@ -283,4 +339,17 @@ function testIdentifier(expression: Expression, expected: string) {
   expect(expression).toBeInstanceOf(Identifier);
   expect((expression as Identifier).value).toBe(expected);
   expect((expression as Identifier).tokenLiteral).toBe(expected);
+}
+
+function assertClass<T>(
+  expression: any,
+  klass: new (...args: any[]) => T,
+): asserts expression is T {
+  if (!(expression instanceof klass)) {
+    throw new Error(
+      `Expected object to be an instance of ${
+        klass.name
+      }, but received ${typeof expression}.`,
+    );
+  }
 }

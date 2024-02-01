@@ -1,6 +1,8 @@
 import {
+  BlockStatement,
   BooleanLiteral,
   Identifier,
+  IfExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -65,6 +67,7 @@ export class Parser {
     this.registerPrefixParseFn(TokenType.TRUE, this.parseBoolean);
     this.registerPrefixParseFn(TokenType.FALSE, this.parseBoolean);
     this.registerPrefixParseFn(TokenType.LPAREN, this.parseGroupedExpression);
+    this.registerPrefixParseFn(TokenType.IF, this.parseIfExpression);
 
     this.registerInfixParseFn(TokenType.PLUS, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.MINUS, this.parseInfixExpression);
@@ -269,6 +272,67 @@ export class Parser {
       }
     }
     return null;
+  }
+
+  parseIfExpression(): Expression | null {
+    const token = this.curToken;
+    if (!token) {
+      return null;
+    }
+    const expression = new IfExpression(token);
+
+    if (!this.expectPeek(TokenType.LPAREN)) {
+      return null;
+    }
+
+    this.nextToken();
+
+    expression.condition = this.parseExpression(Precedence.LOWEST);
+
+    if (!this.expectPeek(TokenType.RPAREN)) {
+      return null;
+    }
+
+    if (!this.expectPeek(TokenType.LBRACE)) {
+      return null;
+    }
+
+    expression.consequence = this.parseBlockStatement();
+
+    if (this.peekTokenIs(TokenType.ELSE)) {
+      this.nextToken();
+
+      if (!this.expectPeek(TokenType.LBRACE)) {
+        return null;
+      }
+
+      expression.alternative = this.parseBlockStatement();
+    }
+
+    return expression;
+  }
+
+  parseBlockStatement(): BlockStatement | null {
+    const token = this.curToken;
+    if (!token) {
+      return null;
+    }
+
+    const block = new BlockStatement(token, []);
+
+    this.nextToken();
+
+    while (
+      !this.curTokenIs(TokenType.RBRACE) &&
+      !this.curTokenIs(TokenType.EOF)
+    ) {
+      const statement = this.parseStatement();
+      if (statement) {
+        block.statements.push(statement);
+      }
+      this.nextToken();
+    }
+    return block;
   }
 
   expectPeek(tokenType: TokenType): boolean {

@@ -109,6 +109,24 @@ export class ExpressionStatement implements Statement {
   }
 }
 
+export class BlockStatement implements Statement {
+  token: Token;
+  statements: Statement[];
+
+  constructor(token: Token, statements: Statement[]) {
+    this.token = token;
+    this.statements = statements;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string(): string {
+    return this.statements.map((s) => s.string).join("");
+  }
+}
+
 export class IntegerLiteral implements Expression {
   token: Token;
   value: number;
@@ -189,5 +207,32 @@ export class InfixExpression implements Expression {
 
   get string() {
     return `(${this.left.string} ${this.operator} ${this.right.string})`;
+  }
+}
+
+export class IfExpression implements Expression {
+  token: Token;
+  condition: Expression | null;
+  consequence: BlockStatement | null;
+  alternative: BlockStatement | null;
+
+  constructor(
+    token: Token,
+    condition?: Expression,
+    consequence?: BlockStatement,
+    alternative?: BlockStatement,
+  ) {
+    this.token = token;
+    this.condition = condition ?? null;
+    this.consequence = consequence ?? null;
+    this.alternative = alternative ?? null;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `if (${this.condition.string})${this.consequence.string}`;
   }
 }
