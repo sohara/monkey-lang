@@ -13,6 +13,7 @@ import {
   BooleanLiteral,
   IfExpression,
   FunctionLiteral,
+  CallExpression,
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
@@ -162,6 +163,15 @@ test("operator precedence in parsing", () => {
     ["1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"],
     ["(5 + 5) * 2", "((5 + 5) * 2)"],
     ["2 / (5 + 5)", "(2 / (5 + 5))"],
+    ["(5 + 5) * 2 * (5 + 5)", "(((5 + 5) * 2) * (5 + 5))"],
+    ["-(5 + 5)", "(-(5 + 5))"],
+    ["!(true == true)", "(!(true == true))"],
+    ["a + add(b * c) + d", "((a + add((b * c))) + d)"],
+    [
+      "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+      "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+    ],
+    ["add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"],
   ];
 
   for (let [input, expected] of tests) {
@@ -301,6 +311,58 @@ test("function parameter parsing", () => {
 
     for (const [i, identifier] of expectedParams.entries()) {
       testLiteralExpression(fl.parameters[i], identifier);
+    }
+  }
+});
+
+test("call expression parsing", () => {
+  const input = "add(1, 2 * 3, 4 + 5)";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  expect(program.statements.length).toBe(1);
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+
+  const callExp = statement.expression;
+  assertClass(callExp, CallExpression);
+
+  testIdentifier(callExp.fn, "add");
+  expect(callExp.arguments.length).toBe(3);
+
+  testLiteralExpression(callExp.arguments[0], 1);
+  testInfixExpression(callExp.arguments[1], 2, "*", 3);
+  testInfixExpression(callExp.arguments[2], 4, "+", 5);
+});
+
+test("call expression parameter parsing", () => {
+  const tests: [string, string, string[]][] = [
+    ["add();", "add", []],
+    ["add(1);", "add", ["1"]],
+    ["add(1, 2 * 3, 4 + 5);", "add", ["1", "(2 * 3)", "(4 + 5)"]],
+  ];
+
+  for (const [input, expectedIdent, expectArgs] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+    const statement = program.statements[0];
+    assertClass(statement, ExpressionStatement);
+
+    const callExp = statement.expression;
+    assertClass(callExp, CallExpression);
+
+    testIdentifier(callExp.fn, expectedIdent);
+
+    expect(callExp.arguments.length).toBe(expectArgs.length);
+
+    for (const [i, arg] of expectArgs.entries()) {
+      expect(callExp.arguments[i].string).toBe(arg);
     }
   }
 });

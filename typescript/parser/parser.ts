@@ -1,6 +1,7 @@
 import {
   BlockStatement,
   BooleanLiteral,
+  CallExpression,
   FunctionLiteral,
   Identifier,
   IfExpression,
@@ -38,6 +39,7 @@ const precedences = {
   [TokenType.MINUS]: Precedence.SUM,
   [TokenType.ASTERISK]: Precedence.PRODUCT,
   [TokenType.SLASH]: Precedence.PRODUCT,
+  [TokenType.LPAREN]: Precedence.CALL,
 } as const;
 
 function isPrecedencesKey(
@@ -79,6 +81,7 @@ export class Parser {
     this.registerInfixParseFn(TokenType.NOT_EQ, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.LT, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.GT, this.parseInfixExpression);
+    this.registerInfixParseFn(TokenType.LPAREN, this.parseCallExpression);
 
     this.nextToken();
     this.nextToken();
@@ -391,6 +394,48 @@ export class Parser {
     }
 
     return identifiers;
+  }
+
+  parseCallExpression(fn: Expression): Expression | null {
+    const token = this.curToken;
+    if (!token) {
+      return null;
+    }
+    const callExp = new CallExpression(token, fn);
+    callExp.arguments = this.parseCallArguments();
+    return callExp;
+  }
+
+  parseCallArguments(): Expression[] {
+    const args: Expression[] = [];
+
+    if (this.peekTokenIs(TokenType.RPAREN)) {
+      this.nextToken();
+      return args;
+    }
+
+    this.nextToken();
+    const firstArg = this.parseExpression(Precedence.LOWEST);
+    if (!firstArg) {
+      return args;
+    }
+    args.push(firstArg);
+
+    while (this.peekTokenIs(TokenType.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      const arg = this.parseExpression(Precedence.LOWEST);
+      if (!arg) {
+        return args;
+      }
+      args.push(arg);
+    }
+
+    if (!this.expectPeek(TokenType.RPAREN)) {
+      return args;
+    }
+
+    return args;
   }
 
   expectPeek(tokenType: TokenType): boolean {

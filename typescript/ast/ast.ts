@@ -260,3 +260,25 @@ export class FunctionLiteral implements Expression {
     }(${this.parameters.join(", ")}) ${this.body?.string}`;
   }
 }
+
+export class CallExpression implements Expression {
+  token: Token;
+  fn: Expression;
+  arguments: Expression[];
+
+  constructor(token: Token, fn: Expression) {
+    this.token = token;
+    this.fn = fn;
+    this.arguments = [];
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `${this.fn.string}(${this.arguments
+      .map((a) => a.string)
+      .join(", ")})`;
+  }
+}
