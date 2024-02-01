@@ -233,6 +233,30 @@ export class IfExpression implements Expression {
   }
 
   get string() {
-    return `if (${this.condition.string})${this.consequence.string}`;
+    return `if (${this.condition?.string})${this.consequence?.string}`;
+  }
+}
+
+export class FunctionLiteral implements Expression {
+  token: Token;
+  parameters: Identifier[];
+  body: BlockStatement | null;
+  name: string;
+
+  constructor(token: Token) {
+    this.token = token;
+    this.parameters = [];
+    this.body = null;
+    this.name = "";
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `${this.tokenLiteral}${
+      this.name ? this.name : ""
+    }(${this.parameters.join(", ")}) ${this.body?.string}`;
   }
 }

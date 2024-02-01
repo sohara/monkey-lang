@@ -1,6 +1,7 @@
 import {
   BlockStatement,
   BooleanLiteral,
+  FunctionLiteral,
   Identifier,
   IfExpression,
   InfixExpression,
@@ -68,6 +69,7 @@ export class Parser {
     this.registerPrefixParseFn(TokenType.FALSE, this.parseBoolean);
     this.registerPrefixParseFn(TokenType.LPAREN, this.parseGroupedExpression);
     this.registerPrefixParseFn(TokenType.IF, this.parseIfExpression);
+    this.registerPrefixParseFn(TokenType.FUNCTION, this.parseFunctionLiteral);
 
     this.registerInfixParseFn(TokenType.PLUS, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.MINUS, this.parseInfixExpression);
@@ -333,6 +335,62 @@ export class Parser {
       this.nextToken();
     }
     return block;
+  }
+
+  parseFunctionLiteral(): Expression | null {
+    const token = this.curToken;
+    if (!token) {
+      return null;
+    }
+
+    const literal = new FunctionLiteral(token);
+
+    if (!this.expectPeek(TokenType.LPAREN)) {
+      return null;
+    }
+
+    literal.parameters = this.parseFunctionParameters();
+
+    if (!this.expectPeek(TokenType.LBRACE)) {
+      return null;
+    }
+
+    literal.body = this.parseBlockStatement();
+
+    return literal;
+  }
+
+  parseFunctionParameters(): Identifier[] {
+    const identifiers: Identifier[] = [];
+    if (this.peekTokenIs(TokenType.RPAREN)) {
+      this.nextToken();
+      return identifiers;
+    }
+
+    this.nextToken();
+    const token = this.curToken;
+    if (!token) {
+      return identifiers;
+    }
+    const ident = new Identifier(token, token.literal);
+    identifiers.push(ident);
+
+    while (this.peekTokenIs(TokenType.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      const newToken = this.curToken;
+      if (!newToken) {
+        return identifiers;
+      }
+      const ident = new Identifier(newToken, newToken.literal);
+      identifiers.push(ident);
+    }
+
+    if (!this.expectPeek(TokenType.RPAREN)) {
+      return [];
+    }
+
+    return identifiers;
   }
 
   expectPeek(tokenType: TokenType): boolean {

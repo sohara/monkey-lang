@@ -12,6 +12,7 @@ import {
   InfixExpression,
   BooleanLiteral,
   IfExpression,
+  FunctionLiteral,
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
@@ -248,6 +249,59 @@ test("`if-else` expressions", () => {
   const alternative = statement.expression.alternative?.statements[0];
   assertClass(alternative, ExpressionStatement);
   testIdentifier(alternative.expression, "y");
+});
+
+test("function literal parsing", () => {
+  const input = "fn(x, y) { x + y; }";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  expect(program.statements.length).toBe(1);
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+
+  const fl = statement.expression;
+  assertClass(fl, FunctionLiteral);
+
+  expect(fl.parameters.length).toBe(2);
+  testLiteralExpression(fl.parameters[0], "x");
+  testLiteralExpression(fl.parameters[1], "y");
+
+  expect(fl.body?.statements.length).toBe(1);
+  assertClass(fl.body?.statements[0], ExpressionStatement);
+
+  testInfixExpression(fl.body.statements[0], "x", "+", "y");
+});
+
+test("function parameter parsing", () => {
+  const tests: [string, string[]][] = [
+    ["fn() {};", []],
+    ["fn(x) {}", ["x"]],
+    ["fn(x, y, z) {}", ["x", "y", "z"]],
+  ];
+
+  for (const [input, expectedParams] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+
+    const statement = program.statements[0];
+    assertClass(statement, ExpressionStatement);
+
+    const fl = statement.expression;
+    assertClass(fl, FunctionLiteral);
+
+    expect(fl.parameters.length).toBe(expectedParams.length);
+
+    for (const [i, identifier] of expectedParams.entries()) {
+      testLiteralExpression(fl.parameters[i], identifier);
+    }
+  }
 });
 
 function testIntegerLiteral(literal: Expression, expectedValue: number) {
