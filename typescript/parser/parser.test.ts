@@ -15,6 +15,7 @@ import {
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
+
 test("`let` statements", () => {
   const input = `
 let x = 5;
@@ -31,7 +32,8 @@ let foobar = 838383;
     const stmt = program.statements[index];
     expect(stmt.tokenLiteral).toBe("let");
     expect(stmt).toBeInstanceOf(LetStatement);
-    expect((stmt as LetStatement).name.tokenLiteral).toBe(identifier);
+    assertClass(stmt, LetStatement);
+    expect(stmt.name.tokenLiteral).toBe(identifier);
   }
 });
 
@@ -63,17 +65,11 @@ test("identifier expressions", () => {
   checkParseErrors(parser);
 
   expect(program.statements.length).toBe(1);
-  expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
-  expect(
-    (program.statements[0] as ExpressionStatement).expression,
-  ).toBeInstanceOf(Identifier);
-  expect(
-    ((program.statements[0] as ExpressionStatement).expression as Identifier)
-      .value,
-  ).toBe("foobar");
-  expect(
-    (program.statements[0] as ExpressionStatement).expression.tokenLiteral,
-  ).toBe("foobar");
+  assertClass(program.statements[0], ExpressionStatement);
+  const expression = program.statements[0].expression;
+  assertClass(expression, Identifier);
+  expect(expression.value).toBe("foobar");
+  expect(expression.tokenLiteral).toBe("foobar");
 });
 
 test("integer literals", () => {
@@ -85,22 +81,11 @@ test("integer literals", () => {
   checkParseErrors(parser);
 
   expect(program.statements.length).toBe(1);
-  expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
-  expect(
-    (program.statements[0] as ExpressionStatement).expression,
-  ).toBeInstanceOf(IntegerLiteral);
-  expect(
-    (
-      (program.statements[0] as ExpressionStatement)
-        .expression as IntegerLiteral
-    ).value,
-  ).toBe(5);
-  expect(
-    (
-      (program.statements[0] as ExpressionStatement)
-        .expression as IntegerLiteral
-    ).tokenLiteral,
-  ).toBe("5");
+  assertClass(program.statements[0], ExpressionStatement);
+  const expression = program.statements[0].expression;
+  assertClass(expression, IntegerLiteral);
+  expect(expression.value).toBe(5);
+  expect(expression.tokenLiteral).toBe("5");
 });
 
 test("parsing prefix expressions", () => {
@@ -117,23 +102,11 @@ test("parsing prefix expressions", () => {
     checkParseErrors(parser);
 
     expect(program.statements.length).toBe(1);
-    expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
-    expect(
-      (program.statements[0] as ExpressionStatement).expression,
-    ).toBeInstanceOf(PrefixExpression);
-    expect(
-      (
-        (program.statements[0] as ExpressionStatement)
-          .expression as PrefixExpression
-      ).operator,
-    ).toBe(operator);
-    testIntegerLiteral(
-      (
-        (program.statements[0] as ExpressionStatement)
-          .expression as PrefixExpression
-      ).right,
-      integerValue,
-    );
+    assertClass(program.statements[0], ExpressionStatement);
+    const expression = program.statements[0].expression;
+    assertClass(expression, PrefixExpression);
+    expect(expression.operator).toBe(operator);
+    testIntegerLiteral(expression.right, integerValue);
   }
 });
 
@@ -160,16 +133,10 @@ test("parsing infix expressions", () => {
     checkParseErrors(parser);
 
     expect(program.statements.length).toBe(1);
-    expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
-    expect(
-      (program.statements[0] as ExpressionStatement).expression,
-    ).toBeInstanceOf(InfixExpression);
-    testInfixExpression(
-      (program.statements[0] as ExpressionStatement).expression,
-      leftValue,
-      operator,
-      rightValue,
-    );
+    assertClass(program.statements[0], ExpressionStatement);
+    const expression = program.statements[0].expression;
+    assertClass(expression, InfixExpression);
+    testInfixExpression(expression, leftValue, operator, rightValue);
   }
 });
 
@@ -221,16 +188,10 @@ test("boolean expressions", () => {
     checkParseErrors(parser);
 
     expect(program.statements.length).toBe(1);
-    expect(program.statements[0]).toBeInstanceOf(ExpressionStatement);
-    expect(
-      (program.statements[0] as ExpressionStatement).expression,
-    ).toBeInstanceOf(BooleanLiteral);
-    expect(
-      (
-        (program.statements[0] as ExpressionStatement)
-          .expression as BooleanLiteral
-      ).value,
-    ).toBe(expectedBoolean);
+    assertClass(program.statements[0], ExpressionStatement);
+    const expression = program.statements[0].expression;
+    assertClass(expression, BooleanLiteral);
+    expect(expression.value).toBe(expectedBoolean);
   }
 });
 
@@ -290,10 +251,10 @@ test("`if-else` expressions", () => {
 });
 
 function testIntegerLiteral(literal: Expression, expectedValue: number) {
-  expect(literal).toBeInstanceOf(IntegerLiteral);
-  expect(typeof (literal as IntegerLiteral).value).toBe("number");
-  expect((literal as IntegerLiteral).value).toBe(expectedValue);
-  expect((literal as IntegerLiteral).tokenLiteral).toBe(`${expectedValue}`);
+  assertClass(literal, IntegerLiteral);
+  expect(typeof literal.value).toBe("number");
+  expect(literal.value).toBe(expectedValue);
+  expect(literal.tokenLiteral).toBe(`${expectedValue}`);
 }
 
 function checkParseErrors(parser: Parser) {
@@ -312,10 +273,10 @@ function testInfixExpression(
   expectedOperator: string,
   expectedRight: LiteralValue,
 ) {
-  expect(expression).toBeInstanceOf(InfixExpression);
-  testLiteralExpression((expression as InfixExpression).left, expectedLeft);
-  expect((expression as InfixExpression).operator).toBe(expectedOperator);
-  testLiteralExpression((expression as InfixExpression).right, expectedRight);
+  assertClass(expression, InfixExpression);
+  testLiteralExpression(expression.left, expectedLeft);
+  expect(expression.operator).toBe(expectedOperator);
+  testLiteralExpression(expression.right, expectedRight);
 }
 
 function testLiteralExpression(expression: Expression, expected: LiteralValue) {
@@ -330,15 +291,15 @@ function testLiteralExpression(expression: Expression, expected: LiteralValue) {
 }
 
 function testBoolean(expression: Expression, expected: boolean) {
-  expect(expression).toBeInstanceOf(BooleanLiteral);
-  expect((expression as BooleanLiteral).value).toBe(expected);
-  expect((expression as BooleanLiteral).tokenLiteral).toBe(`${expected}`);
+  assertClass(expression, BooleanLiteral);
+  expect(expression.value).toBe(expected);
+  expect(expression.tokenLiteral).toBe(`${expected}`);
 }
 
 function testIdentifier(expression: Expression, expected: string) {
-  expect(expression).toBeInstanceOf(Identifier);
-  expect((expression as Identifier).value).toBe(expected);
-  expect((expression as Identifier).tokenLiteral).toBe(expected);
+  assertClass(expression, Identifier);
+  expect(expression.value).toBe(expected);
+  expect(expression.tokenLiteral).toBe(expected);
 }
 
 function assertClass<T>(
