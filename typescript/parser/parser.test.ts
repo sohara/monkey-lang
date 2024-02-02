@@ -437,7 +437,7 @@ function testLetStatement(statement: LetStatement, name: string) {
   expect(statement.name.tokenLiteral).toBe(name);
 }
 
-function assertClass<T>(
+export function assertClass<T>(
   expression: any,
   klass: new (...args: any[]) => T,
 ): asserts expression is T {

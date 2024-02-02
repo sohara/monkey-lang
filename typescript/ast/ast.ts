@@ -1,7 +1,7 @@
 // Assuming you have a similar structure for `Token` in TypeScript
 import { Token } from "../token/token";
 
-interface Node {
+export interface Node {
   tokenLiteral: string;
   string: string;
 }

@@ -2,6 +2,7 @@ import * as readline from "readline";
 import { Lexer } from "../lexer/lexer";
 import { TokenType } from "../token/token";
 import { Parser } from "../parser/parser";
+import { evaluate } from "../evaluator/evaluator";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -20,7 +21,11 @@ export function start() {
       printParseErrors(parser.errors);
     }
 
-    console.log(program.string);
+    // console.log(program.string);
+    const evaluated = evaluate(program);
+    if (evaluated) {
+      console.log(evaluated.inspect);
+    }
     rl.prompt();
   }).on("close", () => {
     console.log("REPL terminated");
