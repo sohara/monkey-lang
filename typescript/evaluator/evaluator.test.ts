@@ -28,6 +28,22 @@ test("evaluation of boolean expressions", () => {
   }
 });
 
+test("evaluation of bank operator", () => {
+  const tests: [string, boolean][] = [
+    ["!true", false],
+    ["!false", true],
+    ["!5", false],
+    ["!!true", true],
+    ["!!false", false],
+    ["!!5", true],
+  ];
+
+  for (const [input, expected] of tests) {
+    const evaluated = testEval(input);
+    testBooleanObject(evaluated, expected);
+  }
+});
+
 function testIntegerObject(obj: Obj | null, expected: number) {
   assertClass(obj, Integer);
   expect(obj.value).toBe(expected);

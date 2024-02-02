@@ -3,6 +3,7 @@ import type {
   ExpressionStatement,
   IntegerLiteral,
   Node,
+  PrefixExpression,
   Program,
   Statement,
 } from "../ast/ast";
@@ -25,9 +26,34 @@ export function evaluate(node: Node): Obj | null {
       return new Integer((node as IntegerLiteral).value);
     case "BooleanLiteral":
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
+    case "PrefixExpression":
+      const right = evaluate((node as PrefixExpression).right);
+      return evalPrefixExpression((node as PrefixExpression).operator, right);
   }
 
   return null;
+}
+
+function evalPrefixExpression(operator: string, right: Obj | null): Obj {
+  switch (operator) {
+    case "!":
+      return evalBangOperatorExpression(right);
+    default:
+      return NULL;
+  }
+}
+
+function evalBangOperatorExpression(right: Obj | null): Obj {
+  switch (right) {
+    case TRUE:
+      return FALSE;
+    case FALSE:
+      return TRUE;
+    case NULL:
+      return TRUE;
+    default:
+      return FALSE;
+  }
 }
 
 function evalStatements(statements: Statement[]): Obj | null {
