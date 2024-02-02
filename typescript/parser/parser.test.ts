@@ -19,42 +19,48 @@ import {
 type LiteralValue = number | boolean | string;
 
 test("`let` statements", () => {
-  const input = `
-let x = 5;
-let y = 10;
-let foobar = 838383;
-`;
-  const lexer = new Lexer(input);
-  const parser = new Parser(lexer);
+  const tests: [string, string, LiteralValue][] = [
+    ["let x = 5;", "x", 5],
+    ["let y = true;", "y", true],
+    ["let foobar = y;", "foobar", "y"],
+  ];
 
-  const program = parser.parseProgram();
-  checkParseErrors(parser);
-  const identifiers = ["x", "y", "foobar"];
-  for (let [index, identifier] of identifiers.entries()) {
-    const stmt = program.statements[index];
-    expect(stmt.tokenLiteral).toBe("let");
-    expect(stmt).toBeInstanceOf(LetStatement);
-    assertClass(stmt, LetStatement);
-    expect(stmt.name.tokenLiteral).toBe(identifier);
+  for (const [input, expectedIdent, expectedValue] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+
+    expect(program.statements.length).toBe(1);
+    const statement = program.statements[0];
+
+    assertClass(statement, LetStatement);
+    testLetStatement(statement, expectedIdent);
+
+    testLiteralExpression(statement.value, expectedValue);
   }
 });
 
 test("`return` statements", () => {
-  const input = `
-return 5;
-return 10;
-return 993322;
-`;
-  const lexer = new Lexer(input);
-  const parser = new Parser(lexer);
+  const tests: [string, LiteralValue][] = [
+    ["return 5;", 5],
+    ["return true;", true],
+    ["return foobar;", "foobar"],
+  ];
 
-  const program = parser.parseProgram();
-  checkParseErrors(parser);
+  for (const [input, expectedValue] of tests) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
 
-  expect(program.statements.length).toBe(3);
-  for (let stmt of program.statements) {
-    expect(stmt).toBeInstanceOf(ReturnStatement);
-    expect(stmt.tokenLiteral).toBe("return");
+    const program = parser.parseProgram();
+    checkParseErrors(parser);
+    expect(program.statements.length).toBe(1);
+    const retStatement = program.statements[0];
+    assertClass(retStatement, ReturnStatement);
+
+    expect(retStatement.tokenLiteral).toBe("return");
+    testLiteralExpression(retStatement.returnValue, expectedValue);
   }
 });
 
@@ -396,7 +402,14 @@ function testInfixExpression(
   testLiteralExpression(expression.right, expectedRight);
 }
 
-function testLiteralExpression(expression: Expression, expected: LiteralValue) {
+function testLiteralExpression(
+  expression: Expression | null,
+  expected: LiteralValue,
+) {
+  if (!expression) {
+    throw new Error("Literal expression is null");
+  }
+
   switch (typeof expected) {
     case "string":
       return testIdentifier(expression, expected);
@@ -417,6 +430,11 @@ function testIdentifier(expression: Expression, expected: string) {
   assertClass(expression, Identifier);
   expect(expression.value).toBe(expected);
   expect(expression.tokenLiteral).toBe(expected);
+}
+
+function testLetStatement(statement: LetStatement, name: string) {
+  expect(statement.tokenLiteral).toBe("let");
+  expect(statement.name.tokenLiteral).toBe(name);
 }
 
 function assertClass<T>(

@@ -132,12 +132,15 @@ export class Parser {
       letStatement = null;
     }
 
-    if (!this.expectPeek(TokenType.ASSIGN)) {
+    if (!letStatement || !this.expectPeek(TokenType.ASSIGN)) {
       return null;
     }
-    // TODO: We're skipping the expressions until we
-    // encounter a semicolon
-    while (!this.curTokenIs(TokenType.SEMICOLON)) {
+
+    this.nextToken();
+
+    letStatement.value = this.parseExpression(Precedence.LOWEST);
+
+    if (this.peekTokenIs(TokenType.SEMICOLON)) {
       this.nextToken();
     }
 
@@ -145,19 +148,18 @@ export class Parser {
   }
 
   parseReturnStatement(): ReturnStatement | null {
-    if (this.curToken) {
-      const returnStatement = new ReturnStatement(this.curToken);
-      this.nextToken();
-
-      // TODO: We're skipping the expressions until we
-      // encounter a semicolon
-      while (!this.curTokenIs(TokenType.SEMICOLON)) {
-        this.nextToken();
-      }
-      return returnStatement;
+    if (!this.curToken) {
+      return null;
     }
+    const returnStatement = new ReturnStatement(this.curToken);
+    this.nextToken();
 
-    return null;
+    returnStatement.returnValue = this.parseExpression(Precedence.LOWEST);
+
+    if (this.peekTokenIs(TokenType.SEMICOLON)) {
+      this.nextToken();
+    }
+    return returnStatement;
   }
 
   parseExpressionStatement(): ExpressionStatement | null {
