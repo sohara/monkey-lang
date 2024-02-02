@@ -42,6 +42,15 @@ test("evaluation of boolean expressions", () => {
     ["1 != 1", false],
     ["1 == 2", false],
     ["1 != 2", true],
+    ["true == true", true],
+    ["false == false", true],
+    ["true == false", false],
+    ["true != false", true],
+    ["false != true", true],
+    ["(1 < 2) == true", true],
+    ["(1 < 2) == false", false],
+    ["(1 > 2) == true", false],
+    ["(1 > 2) == false", true],
   ];
   for (const [input, expected] of tests) {
     const evaluated = testEval(input);

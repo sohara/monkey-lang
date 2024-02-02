@@ -71,6 +71,12 @@ function evalInfixExpression(
         right as Integer,
       );
     }
+    case operator === "==": {
+      return nativeBoolToBooleanObject(left === right);
+    }
+    case operator === "!=": {
+      return nativeBoolToBooleanObject(left !== right);
+    }
     default: {
       return NULL;
     }
