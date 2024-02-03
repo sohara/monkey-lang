@@ -3,6 +3,7 @@ type ObjectType = string;
 export const INTEGER_OBJ = "INTEGER";
 export const BOOLEAN_OBJ = "BOOLEAN";
 export const NULL_OBJ = "NULL";
+export const RETURN_VALUE_OBJ = "RETURN_VALUE";
 
 export interface Obj {
   type: ObjectType;
@@ -47,5 +48,21 @@ export class NullObj implements Obj {
 
   get type() {
     return NULL_OBJ;
+  }
+}
+
+export class ReturnValue implements Obj {
+  value: Obj;
+
+  constructor(value: Obj) {
+    this.value = value;
+  }
+
+  get inspect() {
+    return this.value.inspect;
+  }
+
+  get type() {
+    return RETURN_VALUE_OBJ;
   }
 }

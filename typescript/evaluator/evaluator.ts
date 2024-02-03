@@ -10,13 +10,16 @@ import type {
   PrefixExpression,
   Program,
   Statement,
+  ReturnStatement,
 } from "../ast/ast";
 import {
   BooleanObj,
   INTEGER_OBJ,
   Integer,
   NullObj,
+  ReturnValue,
   type Obj,
+  RETURN_VALUE_OBJ,
 } from "../object/object";
 
 const TRUE = new BooleanObj(true);
@@ -27,13 +30,25 @@ export function evaluate(node: Node): Obj | null {
   switch (node.constructor.name) {
     // Statements
     case "Program": {
-      return evalStatements((node as Program).statements);
+      return evalProgram((node as Program).statements);
     }
     case "BlockStatement": {
-      return evalStatements((node as BlockStatement).statements);
+      return evalBlockStatement(node as BlockStatement);
     }
     case "ExpressionStatement": {
       return evaluate((node as ExpressionStatement).expression);
+    }
+    case "ReturnStatement": {
+      const returnValue = (node as ReturnStatement).returnValue;
+      if (!returnValue) {
+        return NULL;
+      }
+      const value = evaluate(returnValue);
+
+      if (!value) {
+        return NULL;
+      }
+      return new ReturnValue(value);
     }
 
     // Expressions
@@ -65,6 +80,22 @@ export function evaluate(node: Node): Obj | null {
   }
 
   return null;
+}
+
+function evalBlockStatement(block: BlockStatement): Obj {
+  let result: Obj = NULL;
+
+  for (const statement of block.statements) {
+    const evaluated = evaluate(statement);
+    if (evaluated) {
+      result = evaluated;
+    }
+
+    if (result && result.type === RETURN_VALUE_OBJ) {
+      return result;
+    }
+  }
+  return result;
 }
 
 function evalIfExpression(ifexp: IfExpression): Obj | null {
@@ -168,10 +199,13 @@ function evalMinusePrefixExpression(right: Obj | null): Obj {
   return new Integer(-value);
 }
 
-function evalStatements(statements: Statement[]): Obj | null {
+function evalProgram(statements: Statement[]): Obj | null {
   let result: Obj | null = null;
   for (const statement of statements) {
     result = evaluate(statement);
+    if (result && result instanceof ReturnValue) {
+      return result.value;
+    }
   }
   return result;
 }
