@@ -1,6 +1,7 @@
 type ObjectType = string;
 
 export const INTEGER_OBJ = "INTEGER";
+export const STRING_OBJ = "STRING";
 export const BOOLEAN_OBJ = "BOOLEAN";
 export const NULL_OBJ = "NULL";
 export const RETURN_VALUE_OBJ = "RETURN_VALUE";
@@ -23,6 +24,22 @@ export class Integer implements Obj {
 
   get type() {
     return INTEGER_OBJ;
+  }
+}
+
+export class StringObj implements Obj {
+  value: string;
+
+  constructor(value: string) {
+    this.value = value;
+  }
+
+  get inspect() {
+    return `${this.value}`;
+  }
+
+  get type() {
+    return STRING_OBJ;
   }
 }
 

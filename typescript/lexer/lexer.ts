@@ -83,6 +83,10 @@ export class Lexer {
       case "}":
         token = newToken(TokenType.RBRACE, this.ch);
         break;
+      case '"':
+        token.type = TokenType.STRING;
+        token.literal = this.readString();
+        break;
       case 0:
         token = { type: TokenType.EOF, literal: "" };
         break;
@@ -114,6 +118,17 @@ export class Lexer {
     const position = this.position;
     while (isLetter(this.ch)) {
       this.readChar();
+    }
+    return this.input.slice(position, this.position);
+  }
+
+  readString() {
+    const position = this.position + 1;
+    while (true) {
+      this.readChar();
+      if (this.ch === '"' || this.ch === 0) {
+        break;
+      }
     }
     return this.input.slice(position, this.position);
   }

@@ -14,6 +14,7 @@ import {
   IfExpression,
   FunctionLiteral,
   CallExpression,
+  StringLiteral,
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
@@ -371,6 +372,20 @@ test("call expression parameter parsing", () => {
       expect(callExp.arguments[i].string).toBe(arg);
     }
   }
+});
+
+test("string literal expressions", () => {
+  const input = `"Hello world";`;
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+  assertClass(statement.expression, StringLiteral);
+  expect(statement.expression.value).toBe("Hello world");
 });
 
 function testIntegerLiteral(literal: Expression, expectedValue: number) {

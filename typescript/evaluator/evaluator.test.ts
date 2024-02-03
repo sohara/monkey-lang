@@ -4,6 +4,7 @@ import {
   Environment,
   ErrorObj,
   Integer,
+  StringObj,
   type Obj,
 } from "../object/object";
 import { Lexer } from "../lexer/lexer";
@@ -62,6 +63,13 @@ test("evaluation of boolean expressions", () => {
     const evaluated = testEval(input);
     testBooleanObject(evaluated, expected);
   }
+});
+
+test("evaluation of string literal", () => {
+  const input = `"Hello World!"`;
+  const evaluated = testEval(input);
+  assertClass(evaluated, StringObj);
+  expect(evaluated.value).toBe("Hello World!");
 });
 
 test("evaluation of bang operator", () => {

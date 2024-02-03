@@ -3,6 +3,7 @@ export const TokenType = {
   EOF: "EOF",
   IDENT: "IDENT", // add, foobar, x, y
   INT: "INT",
+  STRING: "STRING",
   ASSIGN: "=",
   PLUS: "+",
   COMMA: ",",

@@ -145,6 +145,24 @@ export class IntegerLiteral implements Expression {
   }
 }
 
+export class StringLiteral implements Expression {
+  token: Token;
+  value: string;
+
+  constructor(token: Token, value: string) {
+    this.token = token;
+    this.value = value;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return this.token.literal;
+  }
+}
+
 export class BooleanLiteral implements Expression {
   token: Token;
   value: boolean;

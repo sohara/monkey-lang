@@ -11,6 +11,7 @@ import {
   PrefixExpression,
   Program,
   ReturnStatement,
+  StringLiteral,
 } from "../ast/ast";
 import {
   type Statement,
@@ -65,6 +66,7 @@ export class Parser {
     this.infixParseFns = new Map();
     this.registerPrefixParseFn(TokenType.IDENT, this.parseIdentifier);
     this.registerPrefixParseFn(TokenType.INT, this.parseIntegerLiteral);
+    this.registerPrefixParseFn(TokenType.STRING, this.parseStringLiteral);
     this.registerPrefixParseFn(TokenType.BANG, this.parsePrefixExpression);
     this.registerPrefixParseFn(TokenType.MINUS, this.parsePrefixExpression);
     this.registerPrefixParseFn(TokenType.TRUE, this.parseBoolean);
@@ -208,6 +210,13 @@ export class Parser {
   parseIdentifier(): Expression | null {
     if (this.curToken) {
       return new Identifier(this.curToken, this.curToken?.literal);
+    }
+    return null;
+  }
+
+  parseStringLiteral(): StringLiteral | null {
+    if (this.curToken) {
+      return new StringLiteral(this.curToken, this.curToken.literal);
     }
     return null;
   }

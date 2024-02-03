@@ -13,6 +13,7 @@ import type {
   ReturnStatement,
   Identifier,
   LetStatement,
+  StringLiteral,
 } from "../ast/ast";
 import {
   BooleanObj,
@@ -25,6 +26,7 @@ import {
   ErrorObj,
   ERROR_OBJ,
   Environment,
+  StringObj,
 } from "../object/object";
 
 const TRUE = new BooleanObj(true);
@@ -77,6 +79,9 @@ export function evaluate(node: Node, env: Environment): Obj | null {
     // Expressions
     case "IntegerLiteral": {
       return new Integer((node as IntegerLiteral).value);
+    }
+    case "StringLiteral": {
+      return new StringObj((node as StringLiteral).value);
     }
     case "BooleanLiteral": {
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
