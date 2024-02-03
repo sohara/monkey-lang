@@ -11,6 +11,8 @@ import type {
   Program,
   Statement,
   ReturnStatement,
+  Identifier,
+  LetStatement,
 } from "../ast/ast";
 import {
   BooleanObj,
@@ -22,35 +24,54 @@ import {
   RETURN_VALUE_OBJ,
   ErrorObj,
   ERROR_OBJ,
+  Environment,
 } from "../object/object";
 
 const TRUE = new BooleanObj(true);
 const FALSE = new BooleanObj(false);
 export const NULL = new NullObj();
 
-export function evaluate(node: Node): Obj | null {
+export function evaluate(node: Node, env: Environment): Obj | null {
   switch (node.constructor.name) {
     // Statements
     case "Program": {
-      return evalProgram((node as Program).statements);
+      return evalProgram((node as Program).statements, env);
     }
     case "BlockStatement": {
-      return evalBlockStatement(node as BlockStatement);
+      return evalBlockStatement(node as BlockStatement, env);
     }
     case "ExpressionStatement": {
-      return evaluate((node as ExpressionStatement).expression);
+      return evaluate((node as ExpressionStatement).expression, env);
     }
     case "ReturnStatement": {
       const returnValue = (node as ReturnStatement).returnValue;
       if (!returnValue) {
         return NULL;
       }
-      const value = evaluate(returnValue);
+      const value = evaluate(returnValue, env);
 
       if (!value) {
         return NULL;
       }
+      if (isError(value)) {
+        return value;
+      }
       return new ReturnValue(value);
+    }
+    case "LetStatement": {
+      const unEvaledVal = (node as LetStatement).value;
+      if (!unEvaledVal) {
+        return null;
+      }
+      const value = evaluate(unEvaledVal, env);
+      if (!value) {
+        return NULL;
+      }
+      if (isError(value)) {
+        return value;
+      }
+      env.set((node as LetStatement).name.value, value);
+      break;
     }
 
     // Expressions
@@ -61,15 +82,25 @@ export function evaluate(node: Node): Obj | null {
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
     }
     case "PrefixExpression": {
-      const right = evaluate((node as PrefixExpression).right);
+      const right = evaluate((node as PrefixExpression).right, env);
+      if (isError(right)) {
+        return right;
+      }
       return evalPrefixExpression((node as PrefixExpression).operator, right);
     }
     case "InfixExpression": {
-      const left = evaluate((node as InfixExpression).left);
-      const right = evaluate((node as InfixExpression).right);
+      const left = evaluate((node as InfixExpression).left, env);
+      if (isError(left)) {
+        return left;
+      }
+      const right = evaluate((node as InfixExpression).right, env);
+      if (isError(right)) {
+        return right;
+      }
       if (!right || !left) {
         return NULL;
       }
+
       return evalInfixExpression(
         (node as InfixExpression).operator,
         left,
@@ -77,18 +108,21 @@ export function evaluate(node: Node): Obj | null {
       );
     }
     case "IfExpression": {
-      return evalIfExpression(node as IfExpression);
+      return evalIfExpression(node as IfExpression, env);
+    }
+    case "Identifier": {
+      return evalIdentifier(node as Identifier, env);
     }
   }
 
   return null;
 }
 
-function evalBlockStatement(block: BlockStatement): Obj {
+function evalBlockStatement(block: BlockStatement, env: Environment): Obj {
   let result: Obj = NULL;
 
   for (const statement of block.statements) {
-    const evaluated = evaluate(statement);
+    const evaluated = evaluate(statement, env);
     if (evaluated) {
       result = evaluated;
     }
@@ -103,16 +137,19 @@ function evalBlockStatement(block: BlockStatement): Obj {
   return result;
 }
 
-function evalIfExpression(ifexp: IfExpression): Obj | null {
+function evalIfExpression(ifexp: IfExpression, env: Environment): Obj | null {
   if (!ifexp.condition) {
     return NULL;
   }
-  const condition = evaluate(ifexp.condition);
+  const condition = evaluate(ifexp.condition, env);
+  if (isError(condition)) {
+    return condition;
+  }
 
   if (isTruthy(condition) && ifexp.consequence) {
-    return evaluate(ifexp.consequence);
+    return evaluate(ifexp.consequence, env);
   } else if (ifexp.alternative) {
-    return evaluate(ifexp.alternative);
+    return evaluate(ifexp.alternative, env);
   } else {
     return NULL;
   }
@@ -210,10 +247,10 @@ function evalMinusePrefixExpression(right: Obj | null): Obj {
   return new Integer(-value);
 }
 
-function evalProgram(statements: Statement[]): Obj | null {
+function evalProgram(statements: Statement[], env: Environment): Obj | null {
   let result: Obj | null = null;
   for (const statement of statements) {
-    result = evaluate(statement);
+    result = evaluate(statement, env);
     if (result && result instanceof ReturnValue) {
       return result.value;
     } else if (result && result instanceof ErrorObj) {
@@ -221,6 +258,14 @@ function evalProgram(statements: Statement[]): Obj | null {
     }
   }
   return result;
+}
+
+function evalIdentifier(node: Identifier, env: Environment): Obj {
+  const val = env.get(node.value);
+  if (!val) {
+    return newError(`identifier not found: ${node.value}`);
+  }
+  return val;
 }
 
 function nativeBoolToBooleanObject(input: boolean): BooleanObj {
@@ -246,4 +291,11 @@ function isTruthy(obj: Obj | null): boolean {
 
 function newError(message: string) {
   return new ErrorObj(message);
+}
+
+function isError(obj: Obj | null): boolean {
+  if (obj) {
+    return obj.type === ERROR_OBJ;
+  }
+  return false;
 }

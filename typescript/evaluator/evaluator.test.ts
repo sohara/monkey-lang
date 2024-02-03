@@ -1,5 +1,11 @@
 import { expect, test } from "bun:test";
-import { BooleanObj, ErrorObj, Integer, type Obj } from "../object/object";
+import {
+  BooleanObj,
+  Environment,
+  ErrorObj,
+  Integer,
+  type Obj,
+} from "../object/object";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
 import { NULL, evaluate } from "./evaluator";
@@ -138,6 +144,7 @@ test("error handling", () => {
 		`,
       "unknown operator: BOOLEAN + BOOLEAN",
     ],
+    ["foobar", "identifier not found: foobar"],
   ];
 
   for (const [input, expectedMessage] of tests) {
@@ -145,6 +152,19 @@ test("error handling", () => {
     assertClass(evaluated, ErrorObj);
 
     expect(evaluated.message).toBe(expectedMessage);
+  }
+});
+
+test("`let` statements", () => {
+  const tests: [string, number][] = [
+    ["let a = 5; a;", 5],
+    ["let a = 5 * 5; a;", 25],
+    ["let a = 5; let b = a; b;", 5],
+    ["let a = 5; let b = a; let c = a + b + 5; c;", 15],
+  ];
+
+  for (const [input, expected] of tests) {
+    testIntegerObject(testEval(input), expected);
   }
 });
 
@@ -162,8 +182,9 @@ function testEval(input: string): Obj | null {
   const lexer = new Lexer(input);
   const parser = new Parser(lexer);
   const program = parser.parseProgram();
+  const env = new Environment();
 
-  return evaluate(program);
+  return evaluate(program, env);
 }
 
 function testNullObject(obj: Obj | null) {

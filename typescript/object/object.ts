@@ -83,3 +83,17 @@ export class ErrorObj implements Obj {
     return `ERROR: ${this.message}`;
   }
 }
+
+export class Environment {
+  store: Map<string, Obj> = new Map();
+
+  get(name: string): Obj | null {
+    const obj = this.store.get(name);
+    return obj ?? null;
+  }
+
+  set(name: string, value: Obj): Obj {
+    this.store.set(name, value);
+    return value;
+  }
+}
