@@ -20,6 +20,8 @@ import {
   ReturnValue,
   type Obj,
   RETURN_VALUE_OBJ,
+  ErrorObj,
+  ERROR_OBJ,
 } from "../object/object";
 
 const TRUE = new BooleanObj(true);
@@ -91,7 +93,10 @@ function evalBlockStatement(block: BlockStatement): Obj {
       result = evaluated;
     }
 
-    if (result && result.type === RETURN_VALUE_OBJ) {
+    if (
+      result &&
+      (result.type === RETURN_VALUE_OBJ || result.type === ERROR_OBJ)
+    ) {
       return result;
     }
   }
@@ -132,8 +137,12 @@ function evalInfixExpression(
     case operator === "!=": {
       return nativeBoolToBooleanObject(left !== right);
     }
+    case left.type !== right.type:
+      return newError(`type mismatch: ${left.type} ${operator} ${right.type}`);
     default: {
-      return NULL;
+      return newError(
+        `unknown operator: ${left.type} ${operator} ${right.type}`,
+      );
     }
   }
 }
@@ -145,7 +154,7 @@ function evalPrefixExpression(operator: string, right: Obj | null): Obj {
     case "-":
       return evalMinusePrefixExpression(right);
     default:
-      return NULL;
+      return newError(`unknown operator: ${operator} ${right?.type}`);
   }
 }
 
@@ -174,7 +183,9 @@ function evalIntegerInfixExpression(
     case "!=":
       return nativeBoolToBooleanObject(leftVal !== rightVal);
     default:
-      return NULL;
+      return newError(
+        `unknown operator: ${left.type} ${operator} ${right.type}`,
+      );
   }
 }
 
@@ -193,7 +204,7 @@ function evalBangOperatorExpression(right: Obj | null): Obj {
 
 function evalMinusePrefixExpression(right: Obj | null): Obj {
   if (!right || right?.type !== INTEGER_OBJ) {
-    return NULL;
+    return newError(`unknown operation: -${right?.type}`);
   }
   const value = (right as Integer).value;
   return new Integer(-value);
@@ -205,6 +216,8 @@ function evalProgram(statements: Statement[]): Obj | null {
     result = evaluate(statement);
     if (result && result instanceof ReturnValue) {
       return result.value;
+    } else if (result && result instanceof ErrorObj) {
+      return result;
     }
   }
   return result;
@@ -229,4 +242,8 @@ function isTruthy(obj: Obj | null): boolean {
     default:
       return true;
   }
+}
+
+function newError(message: string) {
+  return new ErrorObj(message);
 }

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { BooleanObj, Integer, type Obj } from "../object/object";
+import { BooleanObj, ErrorObj, Integer, type Obj } from "../object/object";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
 import { NULL, evaluate } from "./evaluator";
@@ -116,11 +116,35 @@ test("evaluation of return statements", () => {
   for (const [input, expected] of tests) {
     const evaluated = testEval(input);
     testIntegerObject(evaluated, expected);
-    // if (typeof expected === "number") {
-    //   testIntegerObject(evaluated, expected);
-    // } else {
-    //   testNullObject(evaluated);
-    // }
+  }
+});
+
+test("error handling", () => {
+  const tests: [string, string][] = [
+    ["5 + true;", "type mismatch: INTEGER + BOOLEAN"],
+    ["5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"],
+    ["-true", "unknown operation: -BOOLEAN"],
+    ["true + false;", "unknown operator: BOOLEAN + BOOLEAN"],
+    ["5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"],
+    ["if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"],
+    [
+      `
+		if (10 > 1) {
+		  if (10 > 1) {
+		    return true + false;
+		  }
+		  return 1;
+		}
+		`,
+      "unknown operator: BOOLEAN + BOOLEAN",
+    ],
+  ];
+
+  for (const [input, expectedMessage] of tests) {
+    const evaluated = testEval(input);
+    assertClass(evaluated, ErrorObj);
+
+    expect(evaluated.message).toBe(expectedMessage);
   }
 });
 

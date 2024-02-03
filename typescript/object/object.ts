@@ -4,6 +4,7 @@ export const INTEGER_OBJ = "INTEGER";
 export const BOOLEAN_OBJ = "BOOLEAN";
 export const NULL_OBJ = "NULL";
 export const RETURN_VALUE_OBJ = "RETURN_VALUE";
+export const ERROR_OBJ = "ERROR";
 
 export interface Obj {
   type: ObjectType;
@@ -64,5 +65,21 @@ export class ReturnValue implements Obj {
 
   get type() {
     return RETURN_VALUE_OBJ;
+  }
+}
+
+export class ErrorObj implements Obj {
+  message: string;
+
+  constructor(message: string) {
+    this.message = message;
+  }
+
+  get type() {
+    return ERROR_OBJ;
+  }
+
+  get inspect() {
+    return `ERROR: ${this.message}`;
   }
 }
