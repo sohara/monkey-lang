@@ -1,6 +1,9 @@
+import { which } from "bun";
 import type {
+  BlockStatement,
   BooleanLiteral,
   ExpressionStatement,
+  IfExpression,
   InfixExpression,
   IntegerLiteral,
   Node,
@@ -18,13 +21,16 @@ import {
 
 const TRUE = new BooleanObj(true);
 const FALSE = new BooleanObj(false);
-const NULL = new NullObj();
+export const NULL = new NullObj();
 
 export function evaluate(node: Node): Obj | null {
   switch (node.constructor.name) {
     // Statements
     case "Program": {
       return evalStatements((node as Program).statements);
+    }
+    case "BlockStatement": {
+      return evalStatements((node as BlockStatement).statements);
     }
     case "ExpressionStatement": {
       return evaluate((node as ExpressionStatement).expression);
@@ -53,9 +59,27 @@ export function evaluate(node: Node): Obj | null {
         right,
       );
     }
+    case "IfExpression": {
+      return evalIfExpression(node as IfExpression);
+    }
   }
 
   return null;
+}
+
+function evalIfExpression(ifexp: IfExpression): Obj | null {
+  if (!ifexp.condition) {
+    return NULL;
+  }
+  const condition = evaluate(ifexp.condition);
+
+  if (isTruthy(condition) && ifexp.consequence) {
+    return evaluate(ifexp.consequence);
+  } else if (ifexp.alternative) {
+    return evaluate(ifexp.alternative);
+  } else {
+    return NULL;
+  }
 }
 
 function evalInfixExpression(
@@ -157,5 +181,18 @@ function nativeBoolToBooleanObject(input: boolean): BooleanObj {
     return TRUE;
   } else {
     return FALSE;
+  }
+}
+
+function isTruthy(obj: Obj | null): boolean {
+  switch (obj) {
+    case NULL:
+      return false;
+    case TRUE:
+      return true;
+    case FALSE:
+      return false;
+    default:
+      return true;
   }
 }

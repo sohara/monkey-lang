@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BooleanObj, Integer, type Obj } from "../object/object";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
-import { evaluate } from "./evaluator";
+import { NULL, evaluate } from "./evaluator";
 import { assertClass } from "../parser/parser.test";
 
 test("evaluation of integer expressions", () => {
@@ -58,7 +58,7 @@ test("evaluation of boolean expressions", () => {
   }
 });
 
-test("evaluation of bank operator", () => {
+test("evaluation of bang operator", () => {
   const tests: [string, boolean][] = [
     ["!true", false],
     ["!false", true],
@@ -71,6 +71,27 @@ test("evaluation of bank operator", () => {
   for (const [input, expected] of tests) {
     const evaluated = testEval(input);
     testBooleanObject(evaluated, expected);
+  }
+});
+
+test("evaluation of if/else expressions", () => {
+  const tests: [string, number | null][] = [
+    ["if (true) { 10 }", 10],
+    ["if (false) { 10 }", null],
+    ["if (1) { 10 }", 10],
+    ["if (1 < 2) { 10 }", 10],
+    ["if (1 > 2) { 10 }", null],
+    ["if (1 > 2) { 10 } else { 20 }", 20],
+    ["if (1 < 2) { 10 } else { 20 }", 10],
+  ];
+
+  for (const [input, expected] of tests) {
+    const evaluated = testEval(input);
+    if (typeof expected === "number") {
+      testIntegerObject(evaluated, expected);
+    } else {
+      testNullObject(evaluated);
+    }
   }
 });
 
@@ -90,4 +111,8 @@ function testEval(input: string): Obj | null {
   const program = parser.parseProgram();
 
   return evaluate(program);
+}
+
+function testNullObject(obj: Obj | null) {
+  expect(obj).toBe(NULL);
 }
