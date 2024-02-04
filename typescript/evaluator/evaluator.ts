@@ -31,8 +31,10 @@ import {
   StringObj,
   STRING_OBJ,
   FunctionObj,
+  Builtin,
 } from "../object/object";
 import type { Environment } from "../object/environment";
+import { builtins } from "./builtins";
 
 const TRUE = new BooleanObj(true);
 const FALSE = new BooleanObj(false);
@@ -165,16 +167,18 @@ function evalExpressions(expressions: Expression[], env: Environment): Obj[] {
 }
 
 function applyFunction(fn: Obj, args: Obj[]): Obj {
-  if (fn.constructor.name !== "FunctionObj") {
+  if (fn.constructor.name === "FunctionObj") {
+    const extendedEnv = extendFunctionEnv(fn as FunctionObj, args);
+    const evaluated = evaluate((fn as FunctionObj).body, extendedEnv);
+    if (!evaluated) {
+      return NULL;
+    }
+    return unwrapReturnValue(evaluated);
+  } else if (fn.constructor.name === "Builtin") {
+    return (fn as Builtin).fn(...args);
+  } else {
     return newError(`not a function: ${fn.constructor.name}`);
   }
-
-  const extendedEnv = extendFunctionEnv(fn as FunctionObj, args);
-  const evaluated = evaluate((fn as FunctionObj).body, extendedEnv);
-  if (!evaluated) {
-    return NULL;
-  }
-  return unwrapReturnValue(evaluated);
 }
 
 function unwrapReturnValue(obj: Obj): Obj {
@@ -358,10 +362,15 @@ function evalProgram(statements: Statement[], env: Environment): Obj | null {
 
 function evalIdentifier(node: Identifier, env: Environment): Obj {
   const val = env.get(node.value);
-  if (!val) {
-    return newError(`identifier not found: ${node.value}`);
+  if (val) {
+    return val;
   }
-  return val;
+  const builtin = builtins.get(node.value);
+  if (builtin) {
+    return builtin;
+  }
+
+  return newError(`identifier not found: ${node.value}`);
 }
 
 function nativeBoolToBooleanObject(input: boolean): BooleanObj {
@@ -385,7 +394,7 @@ function isTruthy(obj: Obj | null): boolean {
   }
 }
 
-function newError(message: string) {
+export function newError(message: string) {
   return new ErrorObj(message);
 }
 

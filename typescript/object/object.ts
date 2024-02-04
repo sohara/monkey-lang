@@ -10,6 +10,7 @@ export const NULL_OBJ = "NULL";
 export const RETURN_VALUE_OBJ = "RETURN_VALUE";
 export const ERROR_OBJ = "ERROR";
 export const FUNCTION_OBJ = "FUNCTION";
+export const BUILTIN_OBJ = "BUILTIN";
 
 export interface Obj {
   type: ObjectType;
@@ -128,5 +129,22 @@ export class FunctionObj implements Obj {
     return `fn(${this.parameters.map((p) => p.string).join(",")}) {\n${
       this.body.string
     }\n}`;
+  }
+}
+
+type BuiltinFunction = (...args: Obj[]) => Obj;
+
+export class Builtin implements Obj {
+  fn: BuiltinFunction;
+
+  constructor(fn: BuiltinFunction) {
+    this.fn = fn;
+  }
+  get type() {
+    return BUILTIN_OBJ;
+  }
+
+  get inspect() {
+    return `builtin function`;
   }
 }

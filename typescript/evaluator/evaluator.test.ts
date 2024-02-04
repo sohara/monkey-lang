@@ -241,6 +241,28 @@ test("function objects", () => {
   expect(fn.body.string).toBe("(x + 2)");
 });
 
+test("built-in functions", () => {
+  const tests: [string, number | string][] = [
+    [`len("")`, 0],
+    [`len("four")`, 4],
+    [`len("hello world")`, 11],
+    [`len(1)`, "argument to 'len' not supported, got INTEGER"],
+    [`len("one", "two")`, "wrong number of arguments. got=2, want=1"],
+  ];
+
+  for (const [input, expected] of tests) {
+    const evaluated = testEval(input);
+    switch (typeof expected) {
+      case "number":
+        testIntegerObject(evaluated, expected);
+        break;
+      case "string":
+        assertClass(evaluated, ErrorObj);
+        expect(evaluated.message).toBe(expected);
+    }
+  }
+});
+
 function testIntegerObject(obj: Obj | null, expected: number) {
   assertClass(obj, Integer);
   expect(obj.value).toBe(expected);
