@@ -1,3 +1,5 @@
+import type { BlockStatement, Identifier } from "../ast/ast";
+
 type ObjectType = string;
 
 export const INTEGER_OBJ = "INTEGER";
@@ -6,6 +8,7 @@ export const BOOLEAN_OBJ = "BOOLEAN";
 export const NULL_OBJ = "NULL";
 export const RETURN_VALUE_OBJ = "RETURN_VALUE";
 export const ERROR_OBJ = "ERROR";
+export const FUNCTION_OBJ = "FUNCTION";
 
 export interface Obj {
   type: ObjectType;
@@ -112,5 +115,31 @@ export class Environment {
   set(name: string, value: Obj): Obj {
     this.store.set(name, value);
     return value;
+  }
+}
+
+export class FunctionObj implements Obj {
+  parameters: Identifier[];
+  body: BlockStatement;
+  env: Environment;
+
+  constructor(
+    parameters: Identifier[],
+    body: BlockStatement,
+    env: Environment,
+  ) {
+    this.parameters = parameters;
+    this.body = body;
+    this.env = env;
+  }
+
+  get type() {
+    return FUNCTION_OBJ;
+  }
+
+  get inspect() {
+    return `fn(${this.parameters.map((p) => p.string).join(",")}) {\n${
+      this.body.string
+    }\n}`;
   }
 }

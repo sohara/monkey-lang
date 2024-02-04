@@ -6,6 +6,7 @@ import {
   Integer,
   StringObj,
   type Obj,
+  FunctionObj,
 } from "../object/object";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
@@ -182,6 +183,15 @@ test("`let` statements", () => {
   for (const [input, expected] of tests) {
     testIntegerObject(testEval(input), expected);
   }
+});
+
+test("function objects", () => {
+  const input = "fn(x) { x + 2}";
+  const fn = testEval(input);
+  assertClass(fn, FunctionObj);
+  expect(fn.parameters.length).toBe(1);
+  expect(fn.parameters[0].string).toBe("x");
+  expect(fn.body.string).toBe("(x + 2)");
 });
 
 function testIntegerObject(obj: Obj | null, expected: number) {

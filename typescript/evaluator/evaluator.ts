@@ -14,6 +14,7 @@ import type {
   Identifier,
   LetStatement,
   StringLiteral,
+  FunctionLiteral,
 } from "../ast/ast";
 import {
   BooleanObj,
@@ -28,6 +29,7 @@ import {
   Environment,
   StringObj,
   STRING_OBJ,
+  FunctionObj,
 } from "../object/object";
 
 const TRUE = new BooleanObj(true);
@@ -118,6 +120,13 @@ export function evaluate(node: Node, env: Environment): Obj | null {
     }
     case "Identifier": {
       return evalIdentifier(node as Identifier, env);
+    }
+    case "FunctionLiteral": {
+      const params = (node as FunctionLiteral).parameters;
+      const body = (node as FunctionLiteral).body;
+      if (body && params) {
+        return new FunctionObj(params, body, env);
+      }
     }
   }
 
