@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 import {
   BooleanObj,
-  Environment,
   ErrorObj,
   Integer,
   StringObj,
@@ -12,6 +11,7 @@ import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
 import { NULL, evaluate } from "./evaluator";
 import { assertClass } from "../parser/parser.test";
+import { Environment } from "../object/environment";
 
 test("evaluation of integer expressions", () => {
   const tests: [string, number][] = [
@@ -123,6 +123,7 @@ test("evaluation of return statements", () => {
     ["return 10; 9;", 10],
     ["return 2 * 5; 9;", 10],
     ["9; return 2 * 5; 9;", 10],
+    ["if (10 > 1) { return 10; }", 10],
     [
       `
 		    if (10 > 1) {
@@ -133,6 +134,25 @@ test("evaluation of return statements", () => {
 		    }
 		    `,
       10,
+    ],
+    [
+      `
+let f = fn(x) {
+  return x;
+  x + 10;
+};
+f(10);`,
+      10,
+    ],
+    [
+      `
+let f = fn(x) {
+   let result = x + 10;
+   return result;
+   return 10;
+};
+f(10);`,
+      20,
     ],
   ];
   for (const [input, expected] of tests) {
@@ -183,6 +203,33 @@ test("`let` statements", () => {
   for (const [input, expected] of tests) {
     testIntegerObject(testEval(input), expected);
   }
+});
+
+test("function application", () => {
+  const tests: [string, number][] = [
+    ["let identity = fn(x) { x; }; identity(5);", 5],
+    ["let identity = fn(x) { return x; }; identity(5);", 5],
+    ["let double = fn(x) { x * 2; }; double(5);", 10],
+    ["let add = fn(x, y) { x + y; }; add(5, 5);", 10],
+    ["let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20],
+    ["fn(x) { x; }(5)", 5],
+  ];
+  for (const [input, expected] of tests) {
+    testIntegerObject(testEval(input), expected);
+  }
+});
+
+test("function enclosing environment", () => {
+  const input = `
+let first = 10;
+let second = 10;
+let third = 10;
+let ourFunction = fn(first) {
+  let second = 20;
+  first + second + third;
+};
+ourFunction(20) + first + second;`;
+  testIntegerObject(testEval(input), 70);
 });
 
 test("function objects", () => {

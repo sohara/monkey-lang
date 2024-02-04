@@ -15,6 +15,8 @@ import type {
   LetStatement,
   StringLiteral,
   FunctionLiteral,
+  CallExpression,
+  Expression,
 } from "../ast/ast";
 import {
   BooleanObj,
@@ -26,11 +28,11 @@ import {
   RETURN_VALUE_OBJ,
   ErrorObj,
   ERROR_OBJ,
-  Environment,
   StringObj,
   STRING_OBJ,
   FunctionObj,
 } from "../object/object";
+import type { Environment } from "../object/environment";
 
 const TRUE = new BooleanObj(true);
 const FALSE = new BooleanObj(false);
@@ -127,10 +129,68 @@ export function evaluate(node: Node, env: Environment): Obj | null {
       if (body && params) {
         return new FunctionObj(params, body, env);
       }
+      break;
+    }
+    case "CallExpression": {
+      const fn = evaluate((node as CallExpression).fn, env);
+      if (!fn) {
+        return null;
+      }
+      if (isError(fn)) {
+        return fn;
+      }
+      const args = evalExpressions((node as CallExpression).arguments, env);
+      if (args.length === 1 && isError(args[0])) {
+        return args[0];
+      }
+      return applyFunction(fn, args);
     }
   }
 
   return null;
+}
+
+function evalExpressions(expressions: Expression[], env: Environment): Obj[] {
+  const result: Obj[] = [];
+  for (const expression of expressions) {
+    const evaluated = evaluate(expression, env);
+    if (evaluated) {
+      if (isError(evaluated)) {
+        return [evaluated];
+      }
+      result.push(evaluated);
+    }
+  }
+  return result;
+}
+
+function applyFunction(fn: Obj, args: Obj[]): Obj {
+  if (fn.constructor.name !== "FunctionObj") {
+    return newError(`not a function: ${fn.constructor.name}`);
+  }
+
+  const extendedEnv = extendFunctionEnv(fn as FunctionObj, args);
+  const evaluated = evaluate((fn as FunctionObj).body, extendedEnv);
+  if (!evaluated) {
+    return NULL;
+  }
+  return unwrapReturnValue(evaluated);
+}
+
+function unwrapReturnValue(obj: Obj): Obj {
+  if (obj.constructor.name === "ReturnValue") {
+    return (obj as ReturnValue).value;
+  }
+  return obj;
+}
+
+function extendFunctionEnv(fn: FunctionObj, args: Obj[]): Environment {
+  const env = fn.env.newEnclosedEnvironment();
+  for (const [idx, param] of fn.parameters.entries()) {
+    env.set(param.value, args[idx]);
+  }
+
+  return env;
 }
 
 function evalBlockStatement(block: BlockStatement, env: Environment): Obj {

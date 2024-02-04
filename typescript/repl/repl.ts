@@ -3,7 +3,7 @@ import { Lexer } from "../lexer/lexer";
 import { TokenType } from "../token/token";
 import { Parser } from "../parser/parser";
 import { evaluate } from "../evaluator/evaluator";
-import { Environment } from "../object/object";
+import { Environment } from "../object/environment";
 
 const rl = readline.createInterface({
   input: process.stdin,
