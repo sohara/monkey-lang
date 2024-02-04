@@ -3,6 +3,7 @@ import { Lexer } from "../lexer/lexer";
 import { TokenType } from "../token/token";
 import { Parser } from "../parser/parser";
 import { evaluate } from "../evaluator/evaluator";
+import { Environment } from "../object/object";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -12,6 +13,7 @@ const rl = readline.createInterface({
 const PROMPT = ">> ";
 
 export function start() {
+  const env = new Environment();
   rl.on("line", (input) => {
     const lexer = new Lexer(input);
     const parser = new Parser(lexer);
@@ -22,7 +24,7 @@ export function start() {
     }
 
     // console.log(program.string);
-    const evaluated = evaluate(program);
+    const evaluated = evaluate(program, env);
     if (evaluated) {
       console.log(evaluated.inspect);
     }

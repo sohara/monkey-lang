@@ -27,6 +27,7 @@ import {
   ERROR_OBJ,
   Environment,
   StringObj,
+  STRING_OBJ,
 } from "../object/object";
 
 const TRUE = new BooleanObj(true);
@@ -173,6 +174,13 @@ function evalInfixExpression(
         right as Integer,
       );
     }
+    case left.type === STRING_OBJ && right.type === STRING_OBJ: {
+      return evalStringInfixExpression(
+        operator,
+        left as StringObj,
+        right as StringObj,
+      );
+    }
     case operator === "==": {
       return nativeBoolToBooleanObject(left === right);
     }
@@ -229,6 +237,20 @@ function evalIntegerInfixExpression(
         `unknown operator: ${left.type} ${operator} ${right.type}`,
       );
   }
+}
+
+function evalStringInfixExpression(
+  operator: string,
+  left: StringObj,
+  right: StringObj,
+): Obj {
+  if (operator != "+") {
+    return newError(`unknown operator: ${left.type} ${operator} ${right.type}`);
+  }
+  const leftVal = left.value;
+  const rightVal = right.value;
+
+  return new StringObj(leftVal + rightVal);
 }
 
 function evalBangOperatorExpression(right: Obj | null): Obj {

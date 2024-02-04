@@ -72,6 +72,13 @@ test("evaluation of string literal", () => {
   expect(evaluated.value).toBe("Hello World!");
 });
 
+test("string concatenatio", () => {
+  const input = `"Hello" + " " + "World!"`;
+  const evaluated = testEval(input);
+  assertClass(evaluated, StringObj);
+  expect(evaluated.value).toBe("Hello World!");
+});
+
 test("evaluation of bang operator", () => {
   const tests: [string, boolean][] = [
     ["!true", false],
@@ -153,6 +160,7 @@ test("error handling", () => {
       "unknown operator: BOOLEAN + BOOLEAN",
     ],
     ["foobar", "identifier not found: foobar"],
+    [`"Hello" - "World"`, "unknown operator: STRING - STRING"],
   ];
 
   for (const [input, expectedMessage] of tests) {
