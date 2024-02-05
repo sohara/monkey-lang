@@ -6,6 +6,7 @@ import {
   FunctionLiteral,
   Identifier,
   IfExpression,
+  IndexExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -30,6 +31,7 @@ enum Precedence {
   PRODUCT, // Automatically becomes 5
   PREFIX, // Automatically becomes 6
   CALL, // Automatically becomes 7
+  INDEX,
 }
 
 const precedences = {
@@ -42,6 +44,7 @@ const precedences = {
   [TokenType.ASTERISK]: Precedence.PRODUCT,
   [TokenType.SLASH]: Precedence.PRODUCT,
   [TokenType.LPAREN]: Precedence.CALL,
+  [TokenType.LBRACKET]: Precedence.INDEX,
 } as const;
 
 function isPrecedencesKey(
@@ -86,6 +89,7 @@ export class Parser {
     this.registerInfixParseFn(TokenType.LT, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.GT, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.LPAREN, this.parseCallExpression);
+    this.registerInfixParseFn(TokenType.LBRACKET, this.parseIndexExpression);
 
     this.nextToken();
     this.nextToken();
@@ -462,6 +466,23 @@ export class Parser {
     array.elements = this.parseExpressionList(TokenType.RBRACKET);
 
     return array;
+  }
+
+  parseIndexExpression(left: Expression): Expression | null {
+    const token = this.curToken;
+    if (!token) {
+      return null;
+    }
+    const indexExp = new IndexExpression(token, left);
+
+    this.nextToken();
+    indexExp.index = this.parseExpression(Precedence.LOWEST);
+
+    if (!this.expectPeek(TokenType.RBRACKET)) {
+      return null;
+    }
+
+    return indexExp;
   }
 
   expectPeek(tokenType: TokenType): boolean {

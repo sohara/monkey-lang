@@ -16,6 +16,7 @@ import {
   CallExpression,
   StringLiteral,
   ArrayLiteral,
+  IndexExpression,
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
@@ -408,6 +409,20 @@ test("array literal expressions", () => {
 
   testInfixExpression(array.elements[1], 2, "*", 3);
   testInfixExpression(array.elements[2], 3, "+", 3);
+});
+
+test("parsing index expressions", () => {
+  const input = "myArray[1 + 1]";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+  const indexExp = statement.expression;
+  assertClass(indexExp, IndexExpression);
 });
 
 function testIntegerLiteral(literal: Expression, expectedValue: number) {

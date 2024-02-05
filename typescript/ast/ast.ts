@@ -317,3 +317,22 @@ export class CallExpression implements Expression {
       .join(", ")})`;
   }
 }
+
+export class IndexExpression implements Expression {
+  token: Token; // The [ token
+  left: Expression;
+  index: Expression | null = null;
+
+  constructor(token: Token, left: Expression) {
+    this.token = token;
+    this.left = left;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `(${this.left.string})[${this.index?.string}])`;
+  }
+}
