@@ -17,6 +17,7 @@ import type {
   FunctionLiteral,
   CallExpression,
   Expression,
+  ArrayLiteral,
 } from "../ast/ast";
 import {
   BooleanObj,
@@ -32,9 +33,11 @@ import {
   STRING_OBJ,
   FunctionObj,
   Builtin,
+  ArrayObj,
 } from "../object/object";
 import type { Environment } from "../object/environment";
 import { builtins } from "./builtins";
+import type { ArrayLiteralExpression } from "typescript";
 
 const TRUE = new BooleanObj(true);
 const FALSE = new BooleanObj(false);
@@ -146,6 +149,13 @@ export function evaluate(node: Node, env: Environment): Obj | null {
         return args[0];
       }
       return applyFunction(fn, args);
+    }
+    case "ArrayLiteral": {
+      const elements = evalExpressions((node as ArrayLiteral).elements, env);
+      if (elements.length === 1 && isError(elements[0])) {
+        return elements[0];
+      }
+      return new ArrayObj(elements);
     }
   }
 

@@ -11,6 +11,7 @@ export const RETURN_VALUE_OBJ = "RETURN_VALUE";
 export const ERROR_OBJ = "ERROR";
 export const FUNCTION_OBJ = "FUNCTION";
 export const BUILTIN_OBJ = "BUILTIN";
+export const ARRAY_OBJ = "ARRAY";
 
 export interface Obj {
   type: ObjectType;
@@ -146,5 +147,21 @@ export class Builtin implements Obj {
 
   get inspect() {
     return `builtin function`;
+  }
+}
+
+export class ArrayObj implements Obj {
+  elements: Obj[];
+
+  constructor(elements: Obj[]) {
+    this.elements = elements;
+  }
+
+  get type() {
+    return ARRAY_OBJ;
+  }
+
+  get inspect() {
+    return `[${this.elements.map((el) => el.inspect).join(", ")}]`;
   }
 }

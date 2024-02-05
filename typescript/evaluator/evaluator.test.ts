@@ -6,6 +6,7 @@ import {
   StringObj,
   type Obj,
   FunctionObj,
+  ArrayObj,
 } from "../object/object";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
@@ -261,6 +262,17 @@ test("built-in functions", () => {
         expect(evaluated.message).toBe(expected);
     }
   }
+});
+
+test("array literal", () => {
+  const input = "[1, 2 * 2, 3 + 3]";
+  const arr = testEval(input);
+  assertClass(arr, ArrayObj);
+  expect(arr.elements.length).toBe(3);
+
+  testIntegerObject(arr.elements[0], 1);
+  testIntegerObject(arr.elements[1], 4);
+  testIntegerObject(arr.elements[2], 6);
 });
 
 function testIntegerObject(obj: Obj | null, expected: number) {
