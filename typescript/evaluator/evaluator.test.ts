@@ -243,7 +243,7 @@ test("function objects", () => {
 });
 
 test("built-in functions", () => {
-  const tests: [string, number | string][] = [
+  const tests: [string, number | string | null | number[]][] = [
     [`len("")`, 0],
     [`len("four")`, 4],
     [`len("hello world")`, 11],
@@ -251,17 +251,38 @@ test("built-in functions", () => {
     [`len("one", "two")`, "wrong number of arguments. got=2, want=1"],
     [`len([1, 2, 3])`, 3],
     [`len([])`, 0],
+    [`first([1, 2, 3])`, 1],
+    [`first([])`, null],
+    [`first(1)`, "argument to 'first' must be ARRAY, got INTEGER"],
+    [`last([1, 2, 3])`, 3],
+    [`last([])`, null],
+    [`last(1)`, "argument to 'last' must be ARRAY, got INTEGER"],
+    [`rest([1, 2, 3])`, [2, 3]],
+    [`rest([])`, null],
+    [`push([], 1)`, [1]],
+    [`push(1, 1)`, "argument to 'push' must be ARRAY, got INTEGER"],
   ];
 
   for (const [input, expected] of tests) {
     const evaluated = testEval(input);
-    switch (typeof expected) {
-      case "number":
+    switch (true) {
+      case typeof expected === "number":
         testIntegerObject(evaluated, expected);
         break;
-      case "string":
+      case typeof expected === "string":
         assertClass(evaluated, ErrorObj);
         expect(evaluated.message).toBe(expected);
+        break;
+
+      case Array.isArray(expected):
+        assertClass(evaluated, ArrayObj);
+        expect(evaluated.elements.length).toBe(expected.length);
+        for (const [idx, int] of expected.entries()) {
+          testIntegerObject(evaluated.elements[idx], int);
+        }
+        break;
+      case expected === null:
+        testNullObject(evaluated);
     }
   }
 });
