@@ -18,6 +18,7 @@ import type {
   CallExpression,
   Expression,
   ArrayLiteral,
+  IndexExpression,
 } from "../ast/ast";
 import {
   BooleanObj,
@@ -34,6 +35,7 @@ import {
   FunctionObj,
   Builtin,
   ArrayObj,
+  ARRAY_OBJ,
 } from "../object/object";
 import type { Environment } from "../object/environment";
 import { builtins } from "./builtins";
@@ -156,6 +158,24 @@ export function evaluate(node: Node, env: Environment): Obj | null {
         return elements[0];
       }
       return new ArrayObj(elements);
+    }
+    case "IndexExpression": {
+      const left = evaluate((node as IndexExpression).left, env);
+      if (isError(left)) {
+        return left;
+      }
+      const index = (node as IndexExpression).index;
+      if (!left || !index) {
+        return null;
+      }
+      const indexObj = evaluate(index, env);
+      if (isError(indexObj)) {
+        return indexObj;
+      }
+      if (!indexObj) {
+        return null;
+      }
+      return evalIndexExpression(left, indexObj);
     }
   }
 
@@ -381,6 +401,26 @@ function evalIdentifier(node: Identifier, env: Environment): Obj {
   }
 
   return newError(`identifier not found: ${node.value}`);
+}
+
+function evalIndexExpression(left: Obj, index: Obj): Obj {
+  switch (true) {
+    case left.type === ARRAY_OBJ && index.type === INTEGER_OBJ:
+      return evalArrayIndexExpression(left, index);
+    default:
+      return newError(`index operator not supported: ${left.type}`);
+  }
+}
+
+function evalArrayIndexExpression(arrayObj: Obj, indexObj: Obj): Obj {
+  const arr = arrayObj as ArrayObj;
+
+  const idx = (indexObj as Integer).value;
+  const max = arr.elements.length - 1;
+  if (idx < 0 || idx > max) {
+    return NULL;
+  }
+  return arr.elements[idx];
 }
 
 function nativeBoolToBooleanObject(input: boolean): BooleanObj {
