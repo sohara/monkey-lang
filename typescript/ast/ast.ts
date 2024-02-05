@@ -181,6 +181,23 @@ export class BooleanLiteral implements Expression {
   }
 }
 
+export class ArrayLiteral implements Expression {
+  token: Token;
+  elements: Expression[] = [];
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `[${this.elements.map((el) => el.string).join(", ")}]`;
+  }
+}
+
 export class PrefixExpression implements Expression {
   token: Token;
   operator: string;

@@ -15,6 +15,7 @@ import {
   FunctionLiteral,
   CallExpression,
   StringLiteral,
+  ArrayLiteral,
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
@@ -386,6 +387,27 @@ test("string literal expressions", () => {
   assertClass(statement, ExpressionStatement);
   assertClass(statement.expression, StringLiteral);
   expect(statement.expression.value).toBe("Hello world");
+});
+
+test("array literal expressions", () => {
+  const input = "[1, 2 * 3, 3 + 3]";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+  const array = statement.expression;
+  assertClass(array, ArrayLiteral);
+
+  expect(array.elements.length).toBe(3);
+
+  testIntegerLiteral(array.elements[0], 1);
+
+  testInfixExpression(array.elements[1], 2, "*", 3);
+  testInfixExpression(array.elements[2], 3, "+", 3);
 });
 
 function testIntegerLiteral(literal: Expression, expectedValue: number) {

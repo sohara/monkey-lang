@@ -1,4 +1,5 @@
 import {
+  ArrayLiteral,
   BlockStatement,
   BooleanLiteral,
   CallExpression,
@@ -74,6 +75,7 @@ export class Parser {
     this.registerPrefixParseFn(TokenType.LPAREN, this.parseGroupedExpression);
     this.registerPrefixParseFn(TokenType.IF, this.parseIfExpression);
     this.registerPrefixParseFn(TokenType.FUNCTION, this.parseFunctionLiteral);
+    this.registerPrefixParseFn(TokenType.LBRACKET, this.parseArrayLiteral);
 
     this.registerInfixParseFn(TokenType.PLUS, this.parseInfixExpression);
     this.registerInfixParseFn(TokenType.MINUS, this.parseInfixExpression);
@@ -413,40 +415,53 @@ export class Parser {
       return null;
     }
     const callExp = new CallExpression(token, fn);
-    callExp.arguments = this.parseCallArguments();
+    callExp.arguments = this.parseExpressionList(TokenType.RPAREN);
     return callExp;
   }
 
-  parseCallArguments(): Expression[] {
-    const args: Expression[] = [];
+  parseExpressionList(end: TokenType): Expression[] {
+    const list: Expression[] = [];
 
-    if (this.peekTokenIs(TokenType.RPAREN)) {
+    if (this.peekTokenIs(end)) {
       this.nextToken();
-      return args;
+      return list;
     }
 
     this.nextToken();
-    const firstArg = this.parseExpression(Precedence.LOWEST);
-    if (!firstArg) {
-      return args;
+    const firstItem = this.parseExpression(Precedence.LOWEST);
+    if (!firstItem) {
+      return list;
     }
-    args.push(firstArg);
+    list.push(firstItem);
 
     while (this.peekTokenIs(TokenType.COMMA)) {
       this.nextToken();
       this.nextToken();
-      const arg = this.parseExpression(Precedence.LOWEST);
-      if (!arg) {
-        return args;
+      const item = this.parseExpression(Precedence.LOWEST);
+      if (!item) {
+        return list;
       }
-      args.push(arg);
+      list.push(item);
     }
 
-    if (!this.expectPeek(TokenType.RPAREN)) {
-      return args;
+    if (!this.expectPeek(end)) {
+      return list;
     }
 
-    return args;
+    return list;
+  }
+
+  parseArrayLiteral(): Expression | null {
+    const token = this.curToken;
+    if (!token) {
+      return null;
+    }
+
+    const array = new ArrayLiteral(token);
+
+    array.elements = this.parseExpressionList(TokenType.RBRACKET);
+
+    return array;
   }
 
   expectPeek(tokenType: TokenType): boolean {
