@@ -68,6 +68,10 @@ export class Lexer {
       case ";":
         token = newToken(TokenType.SEMICOLON, this.ch);
         break;
+      case ":":
+        console.log("colon");
+        token = newToken(TokenType.COLON, this.ch);
+        break;
       case "(":
         token = newToken(TokenType.LPAREN, this.ch);
         break;

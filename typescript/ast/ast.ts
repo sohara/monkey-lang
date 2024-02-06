@@ -198,6 +198,24 @@ export class ArrayLiteral implements Expression {
   }
 }
 
+export class HashLiteral implements Expression {
+  token: Token;
+  pairs: Map<Expression, Expression> = new Map();
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+  get tokenLiteral() {
+    return this.token.literal;
+  }
+
+  get string() {
+    return `{${Array.from(this.pairs.entries())
+      .map(([k, v]) => `${k.string}:${v.string}`)
+      .join(", ")}}`;
+  }
+}
+
 export class PrefixExpression implements Expression {
   token: Token;
   operator: string;

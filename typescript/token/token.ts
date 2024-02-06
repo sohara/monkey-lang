@@ -8,6 +8,7 @@ export const TokenType = {
   PLUS: "+",
   COMMA: ",",
   SEMICOLON: ";",
+  COLON: ":",
   LPAREN: "(",
   RPAREN: ")",
   LBRACE: "{",

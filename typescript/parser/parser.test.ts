@@ -17,6 +17,7 @@ import {
   StringLiteral,
   ArrayLiteral,
   IndexExpression,
+  HashLiteral,
 } from "../ast/ast";
 
 type LiteralValue = number | boolean | string;
@@ -423,6 +424,99 @@ test("parsing index expressions", () => {
   assertClass(statement, ExpressionStatement);
   const indexExp = statement.expression;
   assertClass(indexExp, IndexExpression);
+});
+
+test("parsing empty hash literal", () => {
+  const input = "{}";
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+  const hash = statement.expression;
+  assertClass(hash, HashLiteral);
+  expect(hash.pairs.size).toBe(0);
+});
+
+test("parsing hash literal with string keys", () => {
+  const input = `{"one": 1, "two": 2, "three": 3}`;
+  const expected = {
+    one: 1,
+    two: 2,
+    three: 3,
+  };
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+  const hash = statement.expression;
+  assertClass(hash, HashLiteral);
+  expect(hash.pairs.size).toBe(3);
+
+  for (const [key, value] of hash.pairs.entries()) {
+    assertClass(key, StringLiteral);
+    const expectedValue = expected[key.string as keyof typeof expected];
+    testIntegerLiteral(value, expectedValue);
+  }
+});
+
+test("parsing hash literal with boolean keys", () => {
+  const input = `{true: 1, false: 2}`;
+  const expected = {
+    true: 1,
+    false: 2,
+  };
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+  const hash = statement.expression;
+  assertClass(hash, HashLiteral);
+  expect(hash.pairs.size).toBe(2);
+
+  for (const [key, value] of hash.pairs.entries()) {
+    assertClass(key, BooleanLiteral);
+    const expectedValue = expected[key.string as keyof typeof expected];
+    testIntegerLiteral(value, expectedValue);
+  }
+});
+
+test("parsing hash literal with integer keys", () => {
+  const input = `{1: 1, 2: 2, 3: 3}`;
+  const expected = {
+    1: 1,
+    2: 2,
+    3: 3,
+  };
+  const lexer = new Lexer(input);
+  const parser = new Parser(lexer);
+
+  const program = parser.parseProgram();
+  checkParseErrors(parser);
+
+  const statement = program.statements[0];
+  assertClass(statement, ExpressionStatement);
+  const hash = statement.expression;
+  assertClass(hash, HashLiteral);
+  expect(hash.pairs.size).toBe(3);
+
+  for (const [key, value] of hash.pairs.entries()) {
+    assertClass(key, IntegerLiteral);
+    const expectedValue =
+      expected[key.string as unknown as keyof typeof expected];
+    testIntegerLiteral(value, expectedValue);
+  }
 });
 
 function testIntegerLiteral(literal: Expression, expectedValue: number) {
