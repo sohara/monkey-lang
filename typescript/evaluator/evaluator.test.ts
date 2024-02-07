@@ -186,6 +186,7 @@ test("error handling", () => {
     ],
     ["foobar", "identifier not found: foobar"],
     [`"Hello" - "World"`, "unknown operator: STRING - STRING"],
+    [`{"name": "Monkey"}[fn(x) { x }];`, "unusable as hash key: FUNCTION"],
   ];
 
   for (const [input, expectedMessage] of tests) {
@@ -357,6 +358,26 @@ test("hash literals", () => {
     }
     assertClass(pair.val, Integer);
     testIntegerObject(pair.val, expectedValue);
+  }
+});
+
+test("hash index expressions", () => {
+  const tests: [string, number | null][] = [
+    [`{"foo": 5}["foo"]`, 5],
+    [`{"foo": 5}["bar"]`, null],
+    [`let key = "foo"; {"foo": 5}[key]`, 5],
+    [`{}["foo"]`, null],
+    [`{5: 5}[5]`, 5],
+    [`{true: 5}[true]`, 5],
+    [`{false: 5}[false]`, 5],
+  ];
+  for (const [input, expected] of tests) {
+    const evaluated = testEval(input);
+    if (typeof expected === "number") {
+      testIntegerObject(evaluated, expected);
+    } else {
+      testNullObject(evaluated);
+    }
   }
 });
 

@@ -237,7 +237,7 @@ export class Hash implements Obj {
 
   get inspect() {
     return `{${Array.from(this.pairs.values())
-      .map((pair) => `${pair.key}: ${pair.val}`)
+      .map((pair) => `${pair.key.inspect}: ${pair.val.inspect}`)
       .join(", ")}}`;
   }
 }

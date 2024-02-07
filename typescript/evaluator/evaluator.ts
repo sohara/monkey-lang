@@ -1,4 +1,4 @@
-import { which } from "bun";
+import { indexOfLine, which } from "bun";
 import type {
   BlockStatement,
   BooleanLiteral,
@@ -41,6 +41,7 @@ import {
   HashPair,
   type Hashable,
   Hash,
+  HASH_OBJ,
 } from "../object/object";
 import type { Environment } from "../object/environment";
 import { builtins } from "./builtins";
@@ -414,6 +415,8 @@ function evalIndexExpression(left: Obj, index: Obj): Obj {
   switch (true) {
     case left.type === ARRAY_OBJ && index.type === INTEGER_OBJ:
       return evalArrayIndexExpression(left, index);
+    case left.type === HASH_OBJ:
+      return evalHashIndexExpressions(left, index);
     default:
       return newError(`index operator not supported: ${left.type}`);
   }
@@ -428,6 +431,20 @@ function evalArrayIndexExpression(arrayObj: Obj, indexObj: Obj): Obj {
     return NULL;
   }
   return arr.elements[idx];
+}
+
+function evalHashIndexExpressions(hash: Obj, indexObj: Obj): Obj {
+  if (!isHashable(indexObj)) {
+    return newError(`unusable as hash key: ${indexObj.type}`);
+  }
+  if (hash.type !== HASH_OBJ) {
+    return NULL;
+  }
+  const pair = (hash as Hash).pairs.get(indexObj.hashKey);
+  if (!pair) {
+    return NULL;
+  }
+  return pair.val;
 }
 
 function evalHashLiteral(node: HashLiteral, env: Environment): Obj {
