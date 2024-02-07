@@ -77,10 +77,18 @@ const push = new Builtin(function (...args: Obj[]): Obj {
   return new ArrayObj([...arr.elements, args[1]]);
 });
 
+const puts = new Builtin(function (...args: Obj[]): Obj {
+  for (const arg of args) {
+    console.log(arg.inspect);
+  }
+  return NULL;
+});
+
 export const builtins = new Map<string, Builtin>([
   ["len", len],
   ["first", first],
   ["last", last],
   ["rest", rest],
   ["push", push],
+  ["puts", puts],
 ]);
