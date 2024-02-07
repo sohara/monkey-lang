@@ -7,10 +7,13 @@ import {
   type Obj,
   FunctionObj,
   ArrayObj,
+  Hash,
+  type HashKey,
+  HashPair,
 } from "../object/object";
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
-import { NULL, evaluate } from "./evaluator";
+import { FALSE, NULL, TRUE, evaluate } from "./evaluator";
 import { assertClass } from "../parser/parser.test";
 import { Environment } from "../object/environment";
 
@@ -319,6 +322,41 @@ test("array index expressions", () => {
     } else {
       testNullObject(evaluated);
     }
+  }
+});
+
+test("hash literals", () => {
+  const input = `let two = "two";
+	{
+		"one": 10 - 9,
+		two: 1 + 1,
+		"thr" + "ee": 6 / 2,
+		4: 4,
+		true: 5,
+		false: 6
+	}`;
+  const evaluated = testEval(input);
+  assertClass(evaluated, Hash);
+
+  const expected = {
+    [new StringObj("one").hashKey]: 1,
+    [new StringObj("two").hashKey]: 2,
+    [new StringObj("three").hashKey]: 3,
+    [new Integer(4).hashKey]: 4,
+    [TRUE.hashKey]: 5,
+    [FALSE.hashKey]: 6,
+  };
+
+  expect(Object.keys(expected).length).toEqual(evaluated.pairs.size);
+  for (const [expectedKey, expectedValue] of Object.entries(expected)) {
+    const pair: HashPair | undefined = evaluated.pairs.get(
+      expectedKey as HashKey,
+    );
+    if (!pair) {
+      throw new Error("expected to find pair");
+    }
+    assertClass(pair.val, Integer);
+    testIntegerObject(pair.val, expectedValue);
   }
 });
 

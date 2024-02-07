@@ -1,24 +1,46 @@
 import type { BlockStatement, Identifier } from "../ast/ast";
 import type { Environment } from "./environment";
 
-type ObjectType = string;
+// type ObjectType = string;
 
-export const INTEGER_OBJ = "INTEGER";
-export const STRING_OBJ = "STRING";
-export const BOOLEAN_OBJ = "BOOLEAN";
-export const NULL_OBJ = "NULL";
-export const RETURN_VALUE_OBJ = "RETURN_VALUE";
-export const ERROR_OBJ = "ERROR";
-export const FUNCTION_OBJ = "FUNCTION";
-export const BUILTIN_OBJ = "BUILTIN";
-export const ARRAY_OBJ = "ARRAY";
+export const INTEGER_OBJ = "INTEGER" as const;
+export const STRING_OBJ = "STRING" as const;
+export const BOOLEAN_OBJ = "BOOLEAN" as const;
+export const NULL_OBJ = "NULL" as const;
+export const RETURN_VALUE_OBJ = "RETURN_VALUE" as const;
+export const ERROR_OBJ = "ERROR" as const;
+export const FUNCTION_OBJ = "FUNCTION" as const;
+export const BUILTIN_OBJ = "BUILTIN" as const;
+export const ARRAY_OBJ = "ARRAY" as const;
+export const HASH_OBJ = "HASH" as const;
+
+const OBJECT_TYPES = [
+  INTEGER_OBJ,
+  STRING_OBJ,
+  BOOLEAN_OBJ,
+  NULL_OBJ,
+  RETURN_VALUE_OBJ,
+  ERROR_OBJ,
+  FUNCTION_OBJ,
+  BUILTIN_OBJ,
+  ARRAY_OBJ,
+  HASH_OBJ,
+] as const;
+
+type ObjectType = (typeof OBJECT_TYPES)[number];
 
 export interface Obj {
   type: ObjectType;
   inspect: string;
 }
 
-export class Integer implements Obj {
+export type HashKey = `${ObjectType}:${number}`;
+
+export interface Hashable {
+  hashKey: HashKey;
+}
+
+export class Integer implements Obj, Hashable {
   value: number;
 
   constructor(value: number) {
@@ -31,9 +53,13 @@ export class Integer implements Obj {
   get type() {
     return INTEGER_OBJ;
   }
+
+  get hashKey(): HashKey {
+    return `${this.type}:${this.value + 2}`;
+  }
 }
 
-export class StringObj implements Obj {
+export class StringObj implements Obj, Hashable {
   value: string;
 
   constructor(value: string) {
@@ -47,9 +73,25 @@ export class StringObj implements Obj {
   get type() {
     return STRING_OBJ;
   }
+
+  get hashKey(): HashKey {
+    let hash = 0;
+    if (this.value.length === 0) {
+      hash = 2; // Start from 2 if string is empty
+    }
+    for (let i = 0; i < this.value.length; i++) {
+      const char = this.value.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    if (hash === 0 || hash === 1) {
+      hash += 2; // Adjust hash if it's 0 or 1
+    }
+    return `${this.type}:${hash}`;
+  }
 }
 
-export class BooleanObj implements Obj {
+export class BooleanObj implements Obj, Hashable {
   value: boolean;
 
   constructor(value: boolean) {
@@ -62,6 +104,16 @@ export class BooleanObj implements Obj {
 
   get type() {
     return BOOLEAN_OBJ;
+  }
+
+  get hashKey(): HashKey {
+    let value: number;
+    if (this.value) {
+      value = 1;
+    } else {
+      value = 0;
+    }
+    return `${this.type}:${value}`;
   }
 }
 
@@ -163,5 +215,29 @@ export class ArrayObj implements Obj {
 
   get inspect() {
     return `[${this.elements.map((el) => el.inspect).join(", ")}]`;
+  }
+}
+
+export class HashPair {
+  key: Obj;
+  val: Obj;
+
+  constructor(key: Obj, val: Obj) {
+    this.key = key;
+    this.val = val;
+  }
+}
+
+export class Hash implements Obj {
+  pairs: Map<HashKey, HashPair> = new Map();
+
+  get type() {
+    return HASH_OBJ;
+  }
+
+  get inspect() {
+    return `{${Array.from(this.pairs.values())
+      .map((pair) => `${pair.key}: ${pair.val}`)
+      .join(", ")}}`;
   }
 }

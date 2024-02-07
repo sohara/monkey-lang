@@ -19,6 +19,7 @@ import type {
   Expression,
   ArrayLiteral,
   IndexExpression,
+  HashLiteral,
 } from "../ast/ast";
 import {
   BooleanObj,
@@ -36,13 +37,16 @@ import {
   Builtin,
   ArrayObj,
   ARRAY_OBJ,
+  type HashKey,
+  HashPair,
+  type Hashable,
+  Hash,
 } from "../object/object";
 import type { Environment } from "../object/environment";
 import { builtins } from "./builtins";
-import type { ArrayLiteralExpression } from "typescript";
 
-const TRUE = new BooleanObj(true);
-const FALSE = new BooleanObj(false);
+export const TRUE = new BooleanObj(true);
+export const FALSE = new BooleanObj(false);
 export const NULL = new NullObj();
 
 export function evaluate(node: Node, env: Environment): Obj | null {
@@ -158,6 +162,9 @@ export function evaluate(node: Node, env: Environment): Obj | null {
         return elements[0];
       }
       return new ArrayObj(elements);
+    }
+    case "HashLiteral": {
+      return evalHashLiteral(node, env);
     }
     case "IndexExpression": {
       const left = evaluate((node as IndexExpression).left, env);
@@ -421,6 +428,46 @@ function evalArrayIndexExpression(arrayObj: Obj, indexObj: Obj): Obj {
     return NULL;
   }
   return arr.elements[idx];
+}
+
+function evalHashLiteral(node: HashLiteral, env: Environment): Obj {
+  const pairs: Map<HashKey, HashPair> = new Map();
+
+  for (const [keyNode, valueNode] of node.pairs.entries()) {
+    const key = evaluate(keyNode, env);
+    if (!key || !isHashable(key)) {
+      return NULL;
+    }
+    if (isError(key)) {
+      return key;
+    }
+
+    const value = evaluate(valueNode, env);
+    const hashed = key.hashKey;
+    if (value) {
+      pairs.set(hashed, new HashPair(key, value));
+    }
+  }
+  const hashObj = new Hash();
+  hashObj.pairs = pairs;
+  return hashObj;
+}
+
+// A function to check if an object is Hashable
+function isHashable(object: any): object is Hashable {
+  // Check if the hashKey property exists and is a function
+  if ("hashKey" in object && typeof object.hashKey === "string") {
+    // Optionally, you can add more checks here, e.g., verify the format of hashKey's return value
+    const hashKeyFormat = /^\w+:\d+$/; // Simple regex to match the expected format
+    const hashKeyResult = object.hashKey;
+    if (
+      typeof hashKeyResult === "string" &&
+      hashKeyFormat.test(hashKeyResult)
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function nativeBoolToBooleanObject(input: boolean): BooleanObj {
