@@ -1,6 +1,9 @@
 import * as readline from "readline";
 import { Lexer } from "../lexer/lexer";
 import { TokenType } from "../token/token";
+import { Parser } from "../parser/parser";
+import { evaluate } from "../evaluator/evaluator";
+import { Environment } from "../object/environment";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -10,14 +13,20 @@ const rl = readline.createInterface({
 const PROMPT = ">> ";
 
 export function start() {
+  const env = new Environment();
   rl.on("line", (input) => {
     const lexer = new Lexer(input);
-    for (
-      let tok = lexer.nextToken();
-      tok.type !== TokenType.EOF;
-      tok = lexer.nextToken()
-    ) {
-      console.log(tok);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    if (parser.errors.length > 0) {
+      printParseErrors(parser.errors);
+    }
+
+    // console.log(program.string);
+    const evaluated = evaluate(program, env);
+    if (evaluated) {
+      console.log(evaluated.inspect);
     }
     rl.prompt();
   }).on("close", () => {
@@ -27,4 +36,26 @@ export function start() {
 
   rl.setPrompt(PROMPT);
   rl.prompt();
+}
+
+const MONKEY_FACE = `            __,__
+   .--.  .-"     "-.  .--.
+  / .. \/  .-. .-.  \/ .. \
+ | |  '|  /   Y   \  |'  | |
+ | \   \  \ 0 | 0 /  /   / |
+  \ '- ,\.-"""""""-./, -' /
+   ''-' /_   ^ ^   _\ '-''
+       |  \._   _./  |
+       \   \ '~' /   /
+        '._ '-=-' _.'
+           '-----'
+`;
+
+function printParseErrors(errors: string[]) {
+  console.log(MONKEY_FACE);
+  console.log("Whoops! We ran into some monkey business here!");
+  console.log("Parser errors:");
+  for (const error of errors) {
+    console.log(error);
+  }
 }

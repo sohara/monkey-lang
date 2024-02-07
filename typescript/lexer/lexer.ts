@@ -17,9 +17,9 @@ export class Lexer {
       this.ch = 0;
     } else {
       this.ch = this.input.charAt(this.readPosition);
-      this.position = this.readPosition;
-      this.readPosition += 1;
     }
+    this.position = this.readPosition;
+    this.readPosition += 1;
   }
 
   nextToken(): Token {
@@ -68,11 +68,20 @@ export class Lexer {
       case ";":
         token = newToken(TokenType.SEMICOLON, this.ch);
         break;
+      case ":":
+        token = newToken(TokenType.COLON, this.ch);
+        break;
       case "(":
         token = newToken(TokenType.LPAREN, this.ch);
         break;
       case ")":
         token = newToken(TokenType.RPAREN, this.ch);
+        break;
+      case "[":
+        token = newToken(TokenType.LBRACKET, this.ch);
+        break;
+      case "]":
+        token = newToken(TokenType.RBRACKET, this.ch);
         break;
       case ",":
         token = newToken(TokenType.COMMA, this.ch);
@@ -82,6 +91,10 @@ export class Lexer {
         break;
       case "}":
         token = newToken(TokenType.RBRACE, this.ch);
+        break;
+      case '"':
+        token.type = TokenType.STRING;
+        token.literal = this.readString();
         break;
       case 0:
         token = { type: TokenType.EOF, literal: "" };
@@ -114,6 +127,17 @@ export class Lexer {
     const position = this.position;
     while (isLetter(this.ch)) {
       this.readChar();
+    }
+    return this.input.slice(position, this.position);
+  }
+
+  readString() {
+    const position = this.position + 1;
+    while (true) {
+      this.readChar();
+      if (this.ch === '"' || this.ch === 0) {
+        break;
+      }
     }
     return this.input.slice(position, this.position);
   }
