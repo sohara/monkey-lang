@@ -1,1 +1,4 @@
 typescript/node_modules
+python/monkeyenv
+__pycache__/
+*.py[cod]
