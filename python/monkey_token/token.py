@@ -16,6 +16,34 @@ class TokenType(Enum):
     RBRACE = "}"
     FUNCTION = "FUNCTION"
     LET = "LET"
+    TRUE = "TRUE"
+    FALSE = "FALSE"
+    IF = "IF"
+    ELSE = "ELSE"
+    RETURN = "RETURN"
+    MINUS = "-"
+    BANG = "!"
+    ASTERISK = "*"
+    SLASH = "/"
+    LT = "<"
+    GT = ">"
+    EQ = "=="
+    NOT_EQ = "!="
+
+
+KEYWORDS = {
+    "fn": TokenType.FUNCTION,
+    "let": TokenType.LET,
+    "true": TokenType.TRUE,
+    "false": TokenType.FALSE,
+    "if": TokenType.IF,
+    "else": TokenType.ELSE,
+    "return": TokenType.RETURN,
+}
+
+
+def lookup_ident(ident: str):
+    return KEYWORDS.get(ident, TokenType.IDENT)
 
 
 class Token:
