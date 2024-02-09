@@ -1,4 +1,3 @@
-from types import NoneType
 from monkey_token.token import Token, TokenType, lookup_ident
 
 
