@@ -2,7 +2,7 @@ from monkey_token.token import Token, TokenType, lookup_ident
 
 
 class Lexer:
-    def __init__(self, input):
+    def __init__(self, input: str):
         self.input = input
         self.position = 0
         self.read_position = 0
@@ -18,7 +18,7 @@ class Lexer:
             self.read_position += 1
 
     def next_token(self):
-        token = None
+        token = Token(TokenType.ILLEGAL, "")
         self.skip_whitespace()
         match self.ch:
             case "=":
