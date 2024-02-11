@@ -9,6 +9,10 @@ class Node(ABC):
     def token_literal(self) -> str:
         pass
 
+    @abstractmethod
+    def string(self) -> str:
+        pass
+
 
 class Statement(Node, ABC):
     pass
@@ -28,6 +32,9 @@ class Program(Node):
         else:
             return ""
 
+    def string(self):
+        return "".join(map(lambda x: x.string(), self.statements))
+
 
 class Identifier(Expression):
     def __init__(self, token: Token, value: str):
@@ -36,6 +43,9 @@ class Identifier(Expression):
 
     def token_literal(self) -> str:
         return self.token.literal
+
+    def string(self) -> str:
+        return self.value
 
 
 class LetStatement(Statement):
@@ -52,6 +62,18 @@ class LetStatement(Statement):
     def token_literal(self) -> str:
         return self.token.literal
 
+    def string(self) -> str:
+        parts = [self.token_literal() + " "]
+
+        if self.name:
+            parts.append(self.name.string() + " = ")
+
+        if self.value:
+            parts.append(self.value.string())
+
+        parts.append(";")
+        return "".join(parts)
+
 
 class ReturnStatement(Statement):
     def __init__(self, token: Token, return_value: Optional[Expression] = None):
@@ -60,3 +82,12 @@ class ReturnStatement(Statement):
 
     def token_literal(self) -> str:
         return self.token.literal
+
+    def string(self) -> str:
+        parts = [self.token_literal() + " "]
+
+        if self.return_value:
+            parts.append(self.return_value.string())
+
+        parts.append(";")
+        return "".join(parts)
