@@ -1,12 +1,12 @@
-from typing_extensions import Optional
-from monkey_token.token import Token, TokenType
-from monkey_ast.ast import Identifier, LetStatement, Program
 from lexer.lexer import Lexer
+from monkey_ast.ast import Identifier, LetStatement, Program, ReturnStatement
+from monkey_token.token import Token, TokenType
 
 
 class Parser:
     def __init__(self, lexer: Lexer):
         self.lexer = lexer
+        self.errors = []
         self.cur_token: Token = Token(TokenType.ILLEGAL, "")
         self.peek_token: Token = Token(TokenType.ILLEGAL, "")
         self.next_token()
@@ -29,6 +29,8 @@ class Parser:
         match self.cur_token and self.cur_token.type:
             case TokenType.LET:
                 return self.parse_let_statement()
+            case TokenType.RETURN:
+                return self.parse_return_statement()
             case _:
                 return None
 
@@ -49,6 +51,15 @@ class Parser:
 
         return statement
 
+    def parse_return_statement(self):
+        statement = ReturnStatement(self.cur_token)
+
+        # Skipping expressions until we find a semicolon
+        while not self.cur_token_is(TokenType.SEMICOLON):
+            self.next_token()
+
+        return statement
+
     def peek_token_is(self, token_type: TokenType):
         return self.peek_token.type == token_type
 
@@ -60,4 +71,11 @@ class Parser:
             self.next_token()
             return True
         else:
+            self.peek_error(token_type)
             return False
+
+    def peek_error(self, token_type: TokenType):
+        message = (
+            f"expected next token to be {self.peek_token}, got {token_type} instead"
+        )
+        self.errors.append(message)

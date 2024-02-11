@@ -51,3 +51,12 @@ class LetStatement(Statement):
 
     def token_literal(self) -> str:
         return self.token.literal
+
+
+class ReturnStatement(Statement):
+    def __init__(self, token: Token, return_value: Optional[Expression] = None):
+        self.token = token
+        self.return_value = return_value
+
+    def token_literal(self) -> str:
+        return self.token.literal
