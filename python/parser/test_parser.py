@@ -163,6 +163,30 @@ return 993322;
             assert expression.operator == operator
             test_integer_literal(expression.right, right_value)
 
+    def test_operator_precedence(self):
+        tests: list[tuple[str, str]] = [
+            ("-a * b", "((-a) * b)"),
+            ("!-a", "(!(-a))"),
+            ("a + b + c", "((a + b) + c)"),
+            ("a + b - c", "((a + b) - c)"),
+            ("a * b * c", "((a * b) * c)"),
+            ("a * b / c", "((a * b) / c)"),
+            ("a + b / c", "(a + (b / c))"),
+            ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+            ("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+            ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
+            ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
+            ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+        ]
+        for input, expected in tests:
+            lexer = Lexer(input)
+            parser = Parser(lexer)
+            program = parser.parse_program()
+            check_parse_errors(parser)
+
+            actual = program.string()
+            assert actual == expected, f"expected {expected}, got {actual}"
+
 
 def test_integer_literal(literal: Expression, expectedValue: int):
     assert isinstance(literal, IntegerLiteral)

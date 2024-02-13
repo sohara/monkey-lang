@@ -14,8 +14,8 @@ class Lexer:
             self.ch = None  # Or use "" if you prefer an empty string to signify the end
         else:
             self.ch = self.input[self.read_position]
-            self.position = self.read_position
-            self.read_position += 1
+        self.position = self.read_position
+        self.read_position += 1
 
     def next_token(self):
         token = Token(TokenType.ILLEGAL, "")

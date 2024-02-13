@@ -146,4 +146,4 @@ class InfixExpression(Expression):
         return self.token.literal
 
     def string(self) -> str:
-        return f"({self.left.string()}{self.operator}{self.right.string()})"
+        return f"({self.left.string()} {self.operator} {self.right.string()})"
