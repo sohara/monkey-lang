@@ -91,3 +91,15 @@ class ReturnStatement(Statement):
 
         parts.append(";")
         return "".join(parts)
+
+
+class ExpressionStatement(Statement):
+    def __init__(self, token: Token, expression: Optional[Expression] = None):
+        self.token = token
+        self.expression = expression
+
+    def token_literal(self) -> str:
+        return self.token.literal
+
+    def string(self) -> str:
+        return self.expression.string()

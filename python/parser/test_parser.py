@@ -1,6 +1,12 @@
 import unittest
 from lexer import Lexer
-from monkey_ast.ast import LetStatement, Statement, ReturnStatement
+from monkey_ast.ast import (
+    ExpressionStatement,
+    Identifier,
+    LetStatement,
+    Statement,
+    ReturnStatement,
+)
 from .parser import Parser
 
 
@@ -49,6 +55,30 @@ return 993322;
             assert (
                 statement.token_literal() == "return"
             ), f"return statement token_literal not 'return', got {statement.token_literal()}"
+
+    def test_identifier_expressions(self):
+        input = "foobar;"
+        lexer = Lexer(input)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+        check_parse_errors(parser)
+
+        assert (
+            len(program.statements) == 1
+        ), f"program.statements does not contain 1 statements. got {len(program.statements)}"
+
+        statement = program.statements[0]
+        assert isinstance(statement, ExpressionStatement)
+
+        identifier = statement.expression
+        assert isinstance(identifier, Identifier)
+
+        assert (
+            identifier.value == "foobar"
+        ), f"identifer value not 'foobar', got {identifier.value}"
+        assert (
+            identifier.token_literal() == "foobar"
+        ), f"identifer token_literal not 'foobar', got {identifier.token_literal()}"
 
 
 def test_let_statement(statement: Statement, name: str):
