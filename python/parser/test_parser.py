@@ -4,6 +4,7 @@ from monkey_ast.ast import (
     Expression,
     ExpressionStatement,
     Identifier,
+    InfixExpression,
     IntegerLiteral,
     LetStatement,
     PrefixExpression,
@@ -129,6 +130,38 @@ return 993322;
 
             assert expression.operator is operator
             test_integer_literal(expression.right, integerValue)
+
+    def test_infix_expressions(self):
+        tests: list[tuple[str, int, str, int]] = [
+            ("5 + 5;", 5, "+", 5),
+            ("5 - 5;", 5, "-", 5),
+            ("5 * 5;", 5, "*", 5),
+            ("5 / 5;", 5, "/", 5),
+            ("5 > 5;", 5, ">", 5),
+            ("5 < 5;", 5, "<", 5),
+            ("5 == 5;", 5, "==", 5),
+            ("5 != 5;", 5, "!=", 5),
+        ]
+
+        for input, left_value, operator, right_value in tests:
+            lexer = Lexer(input)
+            parser = Parser(lexer)
+            program = parser.parse_program()
+            check_parse_errors(parser)
+
+            assert (
+                len(program.statements) == 1
+            ), f"program.statements does not contain 1 statements. got {len(program.statements)}"
+
+            statement = program.statements[0]
+            assert isinstance(statement, ExpressionStatement)
+
+            expression = statement.expression
+            assert isinstance(expression, InfixExpression)
+            test_integer_literal(expression.left, left_value)
+
+            assert expression.operator == operator
+            test_integer_literal(expression.right, right_value)
 
 
 def test_integer_literal(literal: Expression, expectedValue: int):

@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 from os import waitstatus_to_exitcode
 from typing import Callable
 from typing_extensions import Dict
@@ -7,6 +7,7 @@ from monkey_ast.ast import (
     Expression,
     ExpressionStatement,
     Identifier,
+    InfixExpression,
     IntegerLiteral,
     LetStatement,
     PrefixExpression,
@@ -16,7 +17,7 @@ from monkey_ast.ast import (
 from monkey_token.token import Token, TokenType
 
 
-class Precedence(Enum):
+class Precedence(IntEnum):
     LOWEST = auto()
     EQUALS = auto()  # ==
     LESSGREATER = auto()  # > or <
@@ -26,17 +27,40 @@ class Precedence(Enum):
     CALL = auto()  # myFunction(x)
 
 
+precedences = {
+    TokenType.EQ: Precedence.EQUALS,
+    TokenType.NOT_EQ: Precedence.EQUALS,
+    TokenType.LT: Precedence.LESSGREATER,
+    TokenType.GT: Precedence.LESSGREATER,
+    TokenType.PLUS: Precedence.SUM,
+    TokenType.MINUS: Precedence.SUM,
+    TokenType.ASTERISK: Precedence.PRODUCT,
+    TokenType.SLASH: Precedence.PRODUCT,
+}
+
+
 class Parser:
     def __init__(self, lexer: Lexer):
         self.lexer = lexer
         self.errors = []
-        self.prefix_parse_fns: Dict[TokenType, Callable[[], Expression]] = {}
-        self.infix_parse_fns: Dict[TokenType, Callable[[Expression], Expression]] = {}
+        self.prefix_parse_fns: Dict[TokenType, Callable[[], Expression | None]] = {}
+        self.infix_parse_fns: Dict[
+            TokenType, Callable[[Expression], Expression | None]
+        ] = {}
 
         self.register_prefix_fn(TokenType.IDENT, self.parse_identifier)
         self.register_prefix_fn(TokenType.INT, self.parse_integer_literal)
         self.register_prefix_fn(TokenType.BANG, self.parse_prefix_expression)
         self.register_prefix_fn(TokenType.MINUS, self.parse_prefix_expression)
+
+        self.register_infix_fn(TokenType.PLUS, self.parse_infix_expression)
+        self.register_infix_fn(TokenType.MINUS, self.parse_infix_expression)
+        self.register_infix_fn(TokenType.SLASH, self.parse_infix_expression)
+        self.register_infix_fn(TokenType.ASTERISK, self.parse_infix_expression)
+        self.register_infix_fn(TokenType.EQ, self.parse_infix_expression)
+        self.register_infix_fn(TokenType.NOT_EQ, self.parse_infix_expression)
+        self.register_infix_fn(TokenType.LT, self.parse_infix_expression)
+        self.register_infix_fn(TokenType.GT, self.parse_infix_expression)
 
         self.cur_token: Token = Token(TokenType.ILLEGAL, "")
         self.peek_token: Token = Token(TokenType.ILLEGAL, "")
@@ -103,12 +127,26 @@ class Parser:
     def parse_expression(self, precedence: Precedence):
         token_type = self.cur_token.type
         prefix_fn = self.prefix_parse_fns.get(token_type)
-        if prefix_fn:
-            left_exp = prefix_fn()
+        if not prefix_fn:
+            self.no_prefix_parse_fn_error(token_type)
+            return None
 
-            return left_exp
-        self.no_prefix_parse_fn_error(token_type)
-        return None
+        left_exp = prefix_fn()
+        if left_exp:
+            while (
+                left_exp
+                and not self.peek_token_is(TokenType.SEMICOLON)
+                and precedence < self.peek_precedence()
+            ):
+                infix_fn = self.infix_parse_fns.get(self.peek_token.type)
+                if not infix_fn:
+                    return left_exp
+
+                self.next_token()
+
+                left_exp = infix_fn(left_exp)
+
+        return left_exp
 
     def parse_identifier(self):
         return Identifier(self.cur_token, self.cur_token.literal)
@@ -138,6 +176,22 @@ class Parser:
         else:
             return None
 
+    def parse_infix_expression(self, left: Expression):
+        infix_token = self.cur_token
+        precedence = self.cur_precedence()
+        self.next_token()
+        right = self.parse_expression(precedence)
+        if right:
+            return InfixExpression(infix_token, left, infix_token.literal, right)
+
+    def cur_precedence(self) -> Precedence:
+        type = self.cur_token.type
+        return precedences.get(type, Precedence.LOWEST)
+
+    def peek_precedence(self) -> Precedence:
+        type = self.peek_token.type
+        return precedences.get(type, Precedence.LOWEST)
+
     def peek_token_is(self, token_type: TokenType):
         return self.peek_token.type == token_type
 
@@ -158,8 +212,15 @@ class Parser:
         )
         self.errors.append(message)
 
-    def register_prefix_fn(self, token_type: TokenType, fn: Callable[[], Expression]):
+    def register_prefix_fn(
+        self, token_type: TokenType, fn: Callable[[], Expression | None]
+    ):
         self.prefix_parse_fns[token_type] = fn
+
+    def register_infix_fn(
+        self, token_type: TokenType, fn: Callable[[Expression], Expression | None]
+    ):
+        self.infix_parse_fns[token_type] = fn
 
     def no_prefix_parse_fn_error(self, token_type: TokenType):
         message = f"no prefix parse function for {token_type} found"
