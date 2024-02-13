@@ -158,10 +158,7 @@ return 993322;
 
             expression = statement.expression
             assert isinstance(expression, InfixExpression)
-            test_integer_literal(expression.left, left_value)
-
-            assert expression.operator == operator
-            test_integer_literal(expression.right, right_value)
+            test_infix_expression(expression, left_value, operator, right_value)
 
     def test_operator_precedence(self):
         tests: list[tuple[str, str]] = [
@@ -186,6 +183,32 @@ return 993322;
 
             actual = program.string()
             assert actual == expected, f"expected {expected}, got {actual}"
+
+
+def test_infix_expression(
+    expression: Expression,
+    expected_left: int,
+    expected_operator: str,
+    expected_right: int,
+):
+    assert isinstance(expression, InfixExpression)
+    test_literal_expression(expression.left, expected_left)
+    assert expression.operator == expected_operator
+    test_literal_expression(expression.right, expected_right)
+
+
+def test_literal_expression(expression: Expression, expected: str | int):
+    match expected:
+        case str():
+            return test_identifier(expression, expected)
+        case int():
+            return test_integer_literal(expression, expected)
+
+
+def test_identifier(expression: Expression, expected: str):
+    assert isinstance(expression, Identifier)
+    assert expression.value == expected
+    assert expression.token_literal() == expected
 
 
 def test_integer_literal(literal: Expression, expectedValue: int):
