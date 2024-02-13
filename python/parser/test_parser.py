@@ -3,6 +3,7 @@ from lexer import Lexer
 from monkey_ast.ast import (
     ExpressionStatement,
     Identifier,
+    IntegerLiteral,
     LetStatement,
     Statement,
     ReturnStatement,
@@ -79,6 +80,28 @@ return 993322;
         assert (
             identifier.token_literal() == "foobar"
         ), f"identifer token_literal not 'foobar', got {identifier.token_literal()}"
+
+    def test_integer_literal_expression(self):
+        input = "5;"
+        lexer = Lexer(input)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+        check_parse_errors(parser)
+
+        assert (
+            len(program.statements) == 1
+        ), f"program.statements does not contain 1 statements. got {len(program.statements)}"
+
+        statement = program.statements[0]
+        assert isinstance(statement, ExpressionStatement)
+
+        integer = statement.expression
+        assert isinstance(integer, IntegerLiteral)
+
+        assert integer.value == 5, f"integer value not '5', got {integer.value}"
+        assert (
+            integer.token_literal() == "5"
+        ), f"integer token_literal not '5', got {integer.token_literal()}"
 
 
 def test_let_statement(statement: Statement, name: str):

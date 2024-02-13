@@ -6,6 +6,7 @@ from monkey_ast.ast import (
     Expression,
     ExpressionStatement,
     Identifier,
+    IntegerLiteral,
     LetStatement,
     Program,
     ReturnStatement,
@@ -31,6 +32,7 @@ class Parser:
         self.infix_parse_fns: Dict[TokenType, Callable[[Expression], Expression]] = {}
 
         self.register_prefix_fn(TokenType.IDENT, self.parse_identifier)
+        self.register_prefix_fn(TokenType.INT, self.parse_integer_literal)
 
         self.cur_token: Token = Token(TokenType.ILLEGAL, "")
         self.peek_token: Token = Token(TokenType.ILLEGAL, "")
@@ -105,6 +107,19 @@ class Parser:
 
     def parse_identifier(self):
         return Identifier(self.cur_token, self.cur_token.literal)
+
+    def parse_integer_literal(self):
+        literal = IntegerLiteral(self.cur_token)
+        value = None
+        try:
+            value = int(self.cur_token.literal)
+        except ValueError:
+            msg = f"Could not parse {self.cur_token.literal} as integer"
+            self.errors.append(msg)
+        if value is not None:
+            literal.value = value
+
+        return literal
 
     def peek_token_is(self, token_type: TokenType):
         return self.peek_token.type == token_type
