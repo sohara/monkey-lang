@@ -1,10 +1,12 @@
 import unittest
 from lexer import Lexer
 from monkey_ast.ast import (
+    Expression,
     ExpressionStatement,
     Identifier,
     IntegerLiteral,
     LetStatement,
+    PrefixExpression,
     Statement,
     ReturnStatement,
 )
@@ -102,6 +104,42 @@ return 993322;
         assert (
             integer.token_literal() == "5"
         ), f"integer token_literal not '5', got {integer.token_literal()}"
+
+    def test_prefix_expressions(self):
+        tests: list[tuple[str, str, int]] = [
+            ("!5;", "!", 5),
+            ("-15;", "-", 15),
+        ]
+
+        for input, operator, integerValue in tests:
+            lexer = Lexer(input)
+            parser = Parser(lexer)
+            program = parser.parse_program()
+            check_parse_errors(parser)
+
+            assert (
+                len(program.statements) == 1
+            ), f"program.statements does not contain 1 statements. got {len(program.statements)}"
+
+            statement = program.statements[0]
+            assert isinstance(statement, ExpressionStatement)
+
+            expression = statement.expression
+            assert isinstance(expression, PrefixExpression)
+
+            assert expression.operator is operator
+            test_integer_literal(expression.right, integerValue)
+
+
+def test_integer_literal(literal: Expression, expectedValue: int):
+    assert isinstance(literal, IntegerLiteral)
+    assert isinstance(literal.value, int)
+    assert (
+        literal.value is expectedValue
+    ), f"expected expression.right to be {expectedValue}, got {literal.value}"
+    assert (
+        literal.token_literal() == str(expectedValue)
+    ), f"expected expression.token_literal to be {expectedValue}, got {literal.token_literal()}"
 
 
 def test_let_statement(statement: Statement, name: str):

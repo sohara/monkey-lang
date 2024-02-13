@@ -102,7 +102,10 @@ class ExpressionStatement(Statement):
         return self.token.literal
 
     def string(self) -> str:
-        return self.expression.string()
+        string = ""
+        if self.expression:
+            string = self.expression.string()
+        return string
 
 
 class IntegerLiteral(Expression):
@@ -115,3 +118,16 @@ class IntegerLiteral(Expression):
 
     def string(self) -> str:
         return self.token.literal
+
+
+class PrefixExpression(Expression):
+    def __init__(self, token: Token, operator: str, right: Expression) -> None:
+        self.token = token
+        self.operator = operator
+        self.right = right
+
+    def token_literal(self) -> str:
+        return self.token.literal
+
+    def string(self) -> str:
+        return f"({self.operator}{self.right.string()})"

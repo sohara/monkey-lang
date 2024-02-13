@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from os import waitstatus_to_exitcode
 from typing import Callable
 from typing_extensions import Dict
 from lexer.lexer import Lexer
@@ -8,6 +9,7 @@ from monkey_ast.ast import (
     Identifier,
     IntegerLiteral,
     LetStatement,
+    PrefixExpression,
     Program,
     ReturnStatement,
 )
@@ -33,6 +35,8 @@ class Parser:
 
         self.register_prefix_fn(TokenType.IDENT, self.parse_identifier)
         self.register_prefix_fn(TokenType.INT, self.parse_integer_literal)
+        self.register_prefix_fn(TokenType.BANG, self.parse_prefix_expression)
+        self.register_prefix_fn(TokenType.MINUS, self.parse_prefix_expression)
 
         self.cur_token: Token = Token(TokenType.ILLEGAL, "")
         self.peek_token: Token = Token(TokenType.ILLEGAL, "")
@@ -97,13 +101,14 @@ class Parser:
         return statement
 
     def parse_expression(self, precedence: Precedence):
-        prefix_fn = self.prefix_parse_fns[self.cur_token.type]
-        if not prefix_fn:
-            return None
+        token_type = self.cur_token.type
+        prefix_fn = self.prefix_parse_fns.get(token_type)
+        if prefix_fn:
+            left_exp = prefix_fn()
 
-        left_exp = prefix_fn()
-
-        return left_exp
+            return left_exp
+        self.no_prefix_parse_fn_error(token_type)
+        return None
 
     def parse_identifier(self):
         return Identifier(self.cur_token, self.cur_token.literal)
@@ -120,6 +125,18 @@ class Parser:
             literal.value = value
 
         return literal
+
+    def parse_prefix_expression(self):
+        prefix_token = self.cur_token
+        self.next_token()
+        right = self.parse_expression(Precedence.PREFIX)
+        if right:
+            prefix_expression = PrefixExpression(
+                prefix_token, prefix_token.literal, right
+            )
+            return prefix_expression
+        else:
+            return None
 
     def peek_token_is(self, token_type: TokenType):
         return self.peek_token.type == token_type
@@ -143,3 +160,7 @@ class Parser:
 
     def register_prefix_fn(self, token_type: TokenType, fn: Callable[[], Expression]):
         self.prefix_parse_fns[token_type] = fn
+
+    def no_prefix_parse_fn_error(self, token_type: TokenType):
+        message = f"no prefix parse function for {token_type} found"
+        self.errors.append(message)
