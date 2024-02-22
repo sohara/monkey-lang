@@ -1,6 +1,7 @@
 import unittest
 from lexer import Lexer
 from monkey_ast.ast import (
+    BooleanLiteral,
     Expression,
     ExpressionStatement,
     Identifier,
@@ -107,9 +108,11 @@ return 993322;
         ), f"integer token_literal not '5', got {integer.token_literal()}"
 
     def test_prefix_expressions(self):
-        tests: list[tuple[str, str, int]] = [
+        tests: list[tuple[str, str, int | bool]] = [
             ("!5;", "!", 5),
             ("-15;", "-", 15),
+            ("!true;", "!", True),
+            ("!false;", "!", False),
         ]
 
         for input, operator, integerValue in tests:
@@ -129,10 +132,10 @@ return 993322;
             assert isinstance(expression, PrefixExpression)
 
             assert expression.operator is operator
-            test_integer_literal(expression.right, integerValue)
+            test_literal_expression(expression.right, integerValue)
 
     def test_infix_expressions(self):
-        tests: list[tuple[str, int, str, int]] = [
+        tests: list[tuple[str, int | bool, str, int | bool]] = [
             ("5 + 5;", 5, "+", 5),
             ("5 - 5;", 5, "-", 5),
             ("5 * 5;", 5, "*", 5),
@@ -141,6 +144,9 @@ return 993322;
             ("5 < 5;", 5, "<", 5),
             ("5 == 5;", 5, "==", 5),
             ("5 != 5;", 5, "!=", 5),
+            ("true == true", True, "==", True),
+            ("true != false", True, "!=", False),
+            ("false == false", False, "==", False),
         ]
 
         for input, left_value, operator, right_value in tests:
@@ -174,6 +180,22 @@ return 993322;
             ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
             ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
             ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+            (
+                "true",
+                "true",
+            ),
+            (
+                "false",
+                "false",
+            ),
+            (
+                "3 > 5 == false",
+                "((3 > 5) == false)",
+            ),
+            (
+                "3 < 5 == true",
+                "((3 < 5) == true)",
+            ),
         ]
         for input, expected in tests:
             lexer = Lexer(input)
@@ -184,12 +206,38 @@ return 993322;
             actual = program.string()
             assert actual == expected, f"expected {expected}, got {actual}"
 
+    def test_boolean_expression(self):
+        tests: list[tuple[str, bool]] = [
+            ("true;", True),
+            ("false;", False),
+        ]
+
+        for input, expected in tests:
+            lexer = Lexer(input)
+            parser = Parser(lexer)
+            program = parser.parse_program()
+            check_parse_errors(parser)
+
+            assert (
+                len(program.statements) == 1
+            ), f"program.statements does not contain 1 statements. got {len(program.statements)}"
+
+            statement = program.statements[0]
+            assert isinstance(statement, ExpressionStatement)
+
+            boolean = statement.expression
+            assert isinstance(boolean, BooleanLiteral)
+
+            assert (
+                boolean.value == expected
+            ), f"boolean value not '{expected}', got {boolean.value}"
+
 
 def test_infix_expression(
     expression: Expression,
-    expected_left: int,
+    expected_left: int | bool,
     expected_operator: str,
-    expected_right: int,
+    expected_right: int | bool,
 ):
     assert isinstance(expression, InfixExpression)
     test_literal_expression(expression.left, expected_left)
@@ -199,6 +247,8 @@ def test_infix_expression(
 
 def test_literal_expression(expression: Expression, expected: str | int):
     match expected:
+        case bool():
+            return test_boolean_literal(expression, expected)
         case str():
             return test_identifier(expression, expected)
         case int():
@@ -209,6 +259,17 @@ def test_identifier(expression: Expression, expected: str):
     assert isinstance(expression, Identifier)
     assert expression.value == expected
     assert expression.token_literal() == expected
+
+
+def test_boolean_literal(literal: Expression, expectedValue: bool):
+    assert isinstance(literal, BooleanLiteral)
+    assert isinstance(literal.value, bool)
+    assert (
+        literal.value is expectedValue
+    ), f"expected expression.right to be {expectedValue}, got {literal.value}"
+    assert (
+        literal.token_literal() == ("true" if expectedValue else "false")
+    ), f"expected expression.token_literal to be {expectedValue}, got {literal.token_literal()}"
 
 
 def test_integer_literal(literal: Expression, expectedValue: int):

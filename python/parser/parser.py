@@ -4,6 +4,7 @@ from typing import Callable
 from typing_extensions import Dict
 from lexer.lexer import Lexer
 from monkey_ast.ast import (
+    BooleanLiteral,
     Expression,
     ExpressionStatement,
     Identifier,
@@ -52,6 +53,8 @@ class Parser:
         self.register_prefix_fn(TokenType.INT, self.parse_integer_literal)
         self.register_prefix_fn(TokenType.BANG, self.parse_prefix_expression)
         self.register_prefix_fn(TokenType.MINUS, self.parse_prefix_expression)
+        self.register_prefix_fn(TokenType.TRUE, self.parse_boolean)
+        self.register_prefix_fn(TokenType.FALSE, self.parse_boolean)
 
         self.register_infix_fn(TokenType.PLUS, self.parse_infix_expression)
         self.register_infix_fn(TokenType.MINUS, self.parse_infix_expression)
@@ -183,6 +186,9 @@ class Parser:
         right = self.parse_expression(precedence)
         if right:
             return InfixExpression(infix_token, left, infix_token.literal, right)
+
+    def parse_boolean(self):
+        return BooleanLiteral(self.cur_token, self.cur_token_is(TokenType.TRUE))
 
     def cur_precedence(self) -> Precedence:
         type = self.cur_token.type
